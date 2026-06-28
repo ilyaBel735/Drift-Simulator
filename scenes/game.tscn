@@ -26,7 +26,7 @@ metallic_texture = SubResource("NoiseTexture2D_lbhrr")
 
 [sub_resource type="BoxMesh" id="BoxMesh_4kxuq"]
 material = SubResource("StandardMaterial3D_mti6b")
-size = Vector3(150, 0.5, 150)
+size = Vector3(349.22223, 0.5, 368.56982)
 
 [sub_resource type="Gradient" id="Gradient_84au0"]
 colors = PackedColorArray(0.76504904, 0.96577257, 0.95916015, 1, 0.3377874, 0.56981, 0.97118074, 1)
@@ -54,7 +54,10 @@ ambient_light_source = 2
 [node name="World" type="Node3D" parent="." unique_id=1100678477]
 
 [node name="Camera3D" type="Camera3D" parent="World" unique_id=6513317 node_paths=PackedStringArray("follow_this")]
-transform = Transform3D(1, 0, 0, 0, 0.7942836, 0.6075471, 0, -0.6075471, 0.7942836, 0, 2.8635268, 1.2175803)
+transform = Transform3D(1, 0, 0, 0, 0.93157744, 0.363543, 0, -0.363543, 0.93157744, -0.03283274, 1.7564275, 1.3313525)
+current = true
+fov = 45.6
+near = 0.005
 script = ExtResource("1_lbhrr")
 follow_this = NodePath("../VehicleController/VehicleRigidBody")
 
@@ -65,13 +68,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.26213372, 0)
 shape = SubResource("BoxShape3D_4kxuq")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="World/Ground" unique_id=1895802569]
-transform = Transform3D(0.9998477, 0, -0.017452406, 0, 1, 0, 0.017452406, 0, 0.9998477, 0, 0, 0)
+transform = Transform3D(0.99948764, 0.01729654, -0.026930176, -0.017111251, 0.99982846, 0.007095944, 0.027048275, -0.0066315182, 0.99961215, -32.499332, -6.07553, -59.34055)
 mesh = SubResource("BoxMesh_4kxuq")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="World" unique_id=886474534]
-transform = Transform3D(0.815177, 0.46397668, -0.34671614, 0, 0.5985998, 0.8010483, 0.5792119, -0.6529961, 0.4879648, -7.951471, 2.1766648, 0)
-light_color = Color(0.99607843, 0.96862745, 0.6862745, 1)
+transform = Transform3D(0.815177, 0.46397668, -0.34671614, 0, 0.5985998, 0.8010483, 0.5792119, -0.6529961, 0.4879648, 24.596375, 9.319487, 0)
+light_energy = 3.6
+light_indirect_energy = 0.0
+light_bake_mode = 0
 shadow_enabled = true
+shadow_bias = 1.07
+shadow_normal_bias = 10.0
+shadow_transmittance_bias = 16.0
+shadow_blur = 0.0
 
 [node name="VehicleController" parent="World" unique_id=1559769827 node_paths=PackedStringArray("vehicle_node") instance=ExtResource("1_yqjtg")]
 vehicle_node = NodePath("VehicleRigidBody")
