@@ -26,7 +26,7 @@ metallic_texture = SubResource("NoiseTexture2D_lbhrr")
 
 [sub_resource type="BoxMesh" id="BoxMesh_4kxuq"]
 material = SubResource("StandardMaterial3D_mti6b")
-size = Vector3(349.22223, 0.5, 368.56982)
+size = Vector3(156.69229, 0.5, 137.8988)
 
 [sub_resource type="Gradient" id="Gradient_84au0"]
 colors = PackedColorArray(0.76504904, 0.96577257, 0.95916015, 1, 0.3377874, 0.56981, 0.97118074, 1)
@@ -68,7 +68,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.26213372, 0)
 shape = SubResource("BoxShape3D_4kxuq")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="World/Ground" unique_id=1895802569]
-transform = Transform3D(0.99948764, 0.01729654, -0.026930176, -0.017111251, 0.99982846, 0.007095944, 0.027048275, -0.0066315182, 0.99961215, -32.499332, -6.07553, -59.34055)
+transform = Transform3D(0.99948764, 0.01729654, -0.026930176, -0.017111251, 0.99982846, 0.007095944, 0.027048275, -0.0066315182, 0.99961215, 6.4462433, -1.2217125, 7.5133247)
 mesh = SubResource("BoxMesh_4kxuq")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="World" unique_id=886474534]
