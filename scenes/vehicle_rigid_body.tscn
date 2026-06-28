@@ -417,4 +417,4 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
 mesh = SubResource("ArrayMesh_0m480")
 
 [node name="Sketchfab_Scene" parent="." unique_id=1847564594 instance=ExtResource("3_hsu57")]
-transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.14976835, 0.415267)
+transform = Transform3D(-0.59999996, 0, -5.2453665e-08, 0, 0.59999996, 0, 5.2453665e-08, 0, -0.59999996, 0, 0.14976835, 0.06760454)

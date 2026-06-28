@@ -22,7 +22,7 @@ class_name VehicleController
 ## The name of the input map used for this vehicle's throttle input.
 ## [br]The input map must be present in your project, and can be set at [code]Project > Project Settings > Input Map[/code].
 ## [br]Leave blank to disable.
-@export var string_throttle_input: String = "Throttle"
+@export var string_throttle_input: String = "Accelerate"
 ## The name of the input map used for this vehicle's handbrake input.
 ## [br]The input map must be present in your project, and can be set at [code]Project > Project Settings > Input Map[/code].
 ## [br]Leave blank to disable.

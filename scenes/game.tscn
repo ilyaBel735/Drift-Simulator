@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bmjqhro01qev1"]
 
 [ext_resource type="PackedScene" uid="uid://c62744xgpl3pv" path="res://scenes/vehicle_rigid_body.tscn" id="1_uwrxv"]
+[ext_resource type="PackedScene" uid="uid://c3ixqkc6k13yi" path="res://addons/gevp/scenes/vehicle_controller.tscn" id="1_yqjtg"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4kxuq"]
 size = Vector3(25, 0.5, 25)
@@ -26,8 +27,14 @@ shape = SubResource("BoxShape3D_4kxuq")
 transform = Transform3D(0.9998477, 0, -0.017452406, 0, 1, 0, 0.017452406, 0, 0.9998477, 0, 0, 0)
 mesh = SubResource("BoxMesh_4kxuq")
 
-[node name="VehicleRigidBody" parent="World" unique_id=297345164 instance=ExtResource("1_uwrxv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5652559, -1.477489)
-
 [node name="Camera3D" type="Camera3D" parent="World" unique_id=6513317]
-transform = Transform3D(1, 0, 0, 0, 0.81955147, 0.57300556, 0, -0.57300556, 0.81955147, 0, 1.4807351, 2.4466412)
+transform = Transform3D(1, 0, 0, 0, 0.63621575, 0.77151126, 0, -0.77151126, 0.63621575, 0, 3.950067, 3.3657262)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World" unique_id=886474534]
+transform = Transform3D(0.815177, 0.46397668, -0.34671614, 0, 0.5985998, 0.8010483, 0.5792119, -0.6529961, 0.4879648, -7.951471, 2.1766648, 0)
+
+[node name="VehicleController" parent="World" unique_id=1559769827 node_paths=PackedStringArray("vehicle_node") instance=ExtResource("1_yqjtg")]
+vehicle_node = NodePath("VehicleRigidBody")
+
+[node name="VehicleRigidBody" parent="World/VehicleController" unique_id=297345164 instance=ExtResource("1_uwrxv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5652559, -1.477489)
