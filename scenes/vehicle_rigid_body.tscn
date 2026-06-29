@@ -360,7 +360,7 @@ rear_damping_ratio = 0.6
 braking_grip_multiplier = 2.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1764628298]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4545e-14, 0.2, 0)
+transform = Transform3D(0.9181373, 0, 0, 0, 0.92148584, 0, 0, 0, 1.2290611, -2.4545e-14, 0.2, 0.28711528)
 shape = SubResource("ConvexPolygonShape3D_5m52b")
 
 [node name="body" type="MeshInstance3D" parent="." unique_id=278343503]
