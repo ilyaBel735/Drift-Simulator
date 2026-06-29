@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://df3v63jjnejj3" path="res://addons/gevp/scripts/camera.gd" id="1_lbhrr"]
 [ext_resource type="PackedScene" uid="uid://c62744xgpl3pv" path="res://scenes/vehicle_rigid_body.tscn" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://c3ixqkc6k13yi" path="res://addons/gevp/scenes/vehicle_controller.tscn" id="1_yqjtg"]
+[ext_resource type="PackedScene" uid="uid://b2hlchrj4h2b7" path="res://addons/gevp/scenes/engine_sound.tscn" id="4_lbhrr"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4kxuq"]
 size = Vector3(150, 0.5, 150)
@@ -87,6 +88,9 @@ vehicle_node = NodePath("VehicleRigidBody")
 
 [node name="VehicleRigidBody" parent="World/VehicleController" unique_id=297345164 instance=ExtResource("1_uwrxv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5652559, -1.477489)
+
+[node name="EngineSound" parent="World/VehicleController/VehicleRigidBody" unique_id=1670187503 node_paths=PackedStringArray("vehicle") instance=ExtResource("4_lbhrr")]
+vehicle = NodePath("..")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="World" unique_id=1586490189]
 environment = SubResource("Environment_3x0ds")
