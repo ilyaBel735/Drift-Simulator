@@ -64,17 +64,17 @@ func _physics_process(_delta):
 	if string_clutch_input != "":
 		vehicle_node.clutch_input = clampf(Input.get_action_strength(string_clutch_input) + Input.get_action_strength(string_handbrake_input), 0.0, 1.0)
 	
-	if string_toggle_transmission != "":
-		if Input.is_action_just_pressed(string_toggle_transmission):
-			vehicle_node.automatic_transmission = not vehicle_node.automatic_transmission
+	# if string_toggle_transmission != "":
+	# 	if Input.is_action_just_pressed(string_toggle_transmission):
+	# 		vehicle_node.automatic_transmission = not vehicle_node.automatic_transmission
 	
 	if string_shift_up != "":
 		if Input.is_action_just_pressed(string_shift_up):
 			vehicle_node.manual_shift(1)
 	
-	if string_shift_down != "":
-		if Input.is_action_just_pressed(string_shift_down):
-			vehicle_node.manual_shift(-1)
+	# if string_shift_down != "":
+	# 	if Input.is_action_just_pressed(string_shift_down):
+	# 		vehicle_node.manual_shift(-1)
 	
 	# Reverse gear logic
 
