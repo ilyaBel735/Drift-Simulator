@@ -6,7 +6,7 @@ public partial class NewCameraController : Camera3D
 	public float FollowDistance { get; set; } = 5.0f;
 
 	[Export]
-	public float FollowHeight { get; set; } = 2.0f;
+	public float FollowHeight { get; set; } = 1.65f;
 
 	[Export]
 	public float Speed { get; set; } = 20.0f;
@@ -54,21 +54,24 @@ public partial class NewCameraController : Camera3D
 		GlobalTransform = new Transform3D(lookBasis, GlobalPosition);
 	}
 
-	// public override void _Input(InputEvent @event)
-	// {
-	// 	if (@event is InputEventKey input)
-	// 	{
-	// 		GD.Print(pitchVar);
-	// 		if (input.Keycode == Key.K)
-	// 		{
-	// 			pitchVar += -1;
-	// 		}
-	// 		if (input.Keycode == Key.L)
-	// 		{
-	// 			pitchVar += 1;
-	// 		}
-	// 	}
+	public override void _Input(InputEvent @event)
+	{
 
-	// }
+		if (@event is InputEventKey input)
+		{
+			GD.Print(FollowHeight);
+			if (input.Keycode == Key.Down)
+			{
+				if(FollowHeight < 0.6f) return;
+				FollowHeight -= 0.2f;
+			}
+			if (input.Keycode == Key.Up)
+			{
+				if(FollowHeight > 5f) return;
+				FollowHeight += 0.2f;
+			}
+		}
+
+	}
 
 }
