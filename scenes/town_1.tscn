@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dclgtudistdew"]
+
+[ext_resource type="Texture2D" uid="uid://sa86b5vit4c4" path="res://assets/textures/modern-business-building-sunset-evening.jpg" id="1_1p35m"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mti6b"]
+albedo_texture = ExtResource("1_1p35m")
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_4kxuq"]
+lightmap_size_hint = Vector2i(104, 356)
+material = SubResource("StandardMaterial3D_mti6b")
+size = Vector3(10, 30, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4kxuq"]
+size = Vector3(10, 30, 10)
+
+[node name="Town" type="StaticBody3D" unique_id=176733824]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=107463312]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
+mesh = SubResource("BoxMesh_4kxuq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=677195260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
+shape = SubResource("BoxShape3D_4kxuq")

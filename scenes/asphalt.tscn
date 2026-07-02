@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://dwxe3fccpeu67"]
+
+[ext_resource type="Texture2D" uid="uid://di2kdr8vmrkej" path="res://assets/textures/asphalt-1.jpg" id="1_p1y82"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mm1bc"]
+albedo_texture = ExtResource("1_p1y82")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_mti6b"]
+material = SubResource("StandardMaterial3D_mm1bc")
+size = Vector2(1, 1)
+
+[node name="Node3D" type="Node3D" unique_id=190725490]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=699933930]
+mesh = SubResource("PlaneMesh_mti6b")
