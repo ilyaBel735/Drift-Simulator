@@ -10,17 +10,17 @@ uv1_triplanar = true
 [sub_resource type="BoxMesh" id="BoxMesh_4kxuq"]
 lightmap_size_hint = Vector2i(104, 356)
 material = SubResource("StandardMaterial3D_mti6b")
-size = Vector3(10, 30, 10)
+size = Vector3(10, 25, 10)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4kxuq"]
-size = Vector3(10, 30, 10)
+size = Vector3(10, 25, 10)
 
 [node name="Town" type="StaticBody3D" unique_id=176733824]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=107463312]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12.5, 0)
 mesh = SubResource("BoxMesh_4kxuq")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=677195260]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12.5, 0)
 shape = SubResource("BoxShape3D_4kxuq")

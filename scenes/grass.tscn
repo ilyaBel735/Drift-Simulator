@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://kcdxwnkp10fj"]
+
+[ext_resource type="Texture2D" uid="uid://b44gsem3jtawv" path="res://assets/textures/grass.jpg" id="1_e1kak"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mti6b"]
+albedo_texture = ExtResource("1_e1kak")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_4kxuq"]
+material = SubResource("StandardMaterial3D_mti6b")
+size = Vector2(1, 1)
+
+[node name="Node3D" type="Node3D" unique_id=190725490]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=869700469]
+mesh = SubResource("PlaneMesh_4kxuq")
