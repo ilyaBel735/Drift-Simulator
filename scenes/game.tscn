@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bmjqhro01qev1"]
 
-[ext_resource type="Script" uid="uid://ci5htnx16s0gn" path="res://scenes/NewCameraController.cs" id="1_iywne"]
+[ext_resource type="Script" uid="uid://ci5htnx16s0gn" path="res://scripts/NewCameraController.cs" id="1_iywne"]
 [ext_resource type="PackedScene" uid="uid://c62744xgpl3pv" path="res://scenes/vehicle_rigid_body.tscn" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://c3ixqkc6k13yi" path="res://addons/gevp/scenes/vehicle_controller.tscn" id="1_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://b2hlchrj4h2b7" path="res://addons/gevp/scenes/engine_sound.tscn" id="4_lbhrr"]

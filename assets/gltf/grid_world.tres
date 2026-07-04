@@ -1,11 +1,11 @@
 [gd_resource type="MeshLibrary" format=3 uid="uid://c16qpjeewudap"]
 
-[ext_resource type="Texture2D" uid="uid://di2kdr8vmrkej" path="res://assets/textures/asphalt-1.jpg" id="1_1hxx4"]
-[ext_resource type="Texture2D" uid="uid://b44gsem3jtawv" path="res://assets/textures/grass.jpg" id="2_ye7nh"]
-[ext_resource type="Texture2D" uid="uid://sa86b5vit4c4" path="res://assets/textures/modern-business-building-sunset-evening.jpg" id="3_sgajt"]
+[ext_resource type="Texture2D" uid="uid://di2kdr8vmrkej" path="res://assets/textures/asphalt-1.jpg" id="1_7rk3l"]
+[ext_resource type="Texture2D" uid="uid://b44gsem3jtawv" path="res://assets/textures/grass.jpg" id="2_lvnsu"]
+[ext_resource type="Texture2D" uid="uid://sa86b5vit4c4" path="res://assets/textures/modern-business-building-sunset-evening.jpg" id="3_kuhbp"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mti6b"]
-albedo_texture = ExtResource("1_1hxx4")
+albedo_texture = ExtResource("1_7rk3l")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_sgajt"]
 material = SubResource("StandardMaterial3D_mti6b")
@@ -24,7 +24,7 @@ data = {
 image = SubResource("Image_sgajt")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mm1bc"]
-albedo_texture = ExtResource("2_ye7nh")
+albedo_texture = ExtResource("2_lvnsu")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1tfwu"]
 material = SubResource("StandardMaterial3D_mm1bc")
@@ -43,9 +43,10 @@ data = {
 image = SubResource("Image_rnpll")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_upfww"]
-albedo_texture = ExtResource("3_sgajt")
-uv1_scale = Vector3(0.3, 0.3, 0.3)
+albedo_texture = ExtResource("3_kuhbp")
+uv1_scale = Vector3(0.15, 0.15, 0.15)
 uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="BoxMesh" id="BoxMesh_sdhhn"]
 lightmap_size_hint = Vector2i(104, 356)

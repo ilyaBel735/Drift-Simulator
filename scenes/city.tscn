@@ -1,11 +1,12 @@
 [gd_scene format=3 uid="uid://b6tkwdw7rxwd0"]
 
+[ext_resource type="Script" uid="uid://pq4byq60ykh5" path="res://scripts/City.cs" id="1_drx7m"]
 [ext_resource type="Texture2D" uid="uid://b44gsem3jtawv" path="res://assets/textures/grass.jpg" id="2_oacpt"]
 [ext_resource type="PackedScene" uid="uid://c3ixqkc6k13yi" path="res://addons/gevp/scenes/vehicle_controller.tscn" id="3_2jj31"]
 [ext_resource type="PackedScene" uid="uid://c62744xgpl3pv" path="res://scenes/vehicle_rigid_body.tscn" id="4_drx7m"]
 [ext_resource type="PackedScene" uid="uid://b2hlchrj4h2b7" path="res://addons/gevp/scenes/engine_sound.tscn" id="5_2jj31"]
-[ext_resource type="Script" uid="uid://ci5htnx16s0gn" path="res://scenes/NewCameraController.cs" id="5_oacpt"]
-[ext_resource type="MeshLibrary" uid="uid://c16qpjeewudap" path="res://assets/gltf/garid_world.tres" id="7_drx7m"]
+[ext_resource type="Script" uid="uid://ci5htnx16s0gn" path="res://scripts/NewCameraController.cs" id="5_oacpt"]
+[ext_resource type="MeshLibrary" uid="uid://c16qpjeewudap" path="res://assets/gltf/grid_world.tres" id="7_drx7m"]
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_4kxuq"]
 
@@ -32,6 +33,7 @@ tonemap_mode = 2
 glow_enabled = true
 
 [node name="City" type="Node3D" unique_id=1864641472]
+script = ExtResource("1_drx7m")
 
 [node name="Grass" type="StaticBody3D" parent="." unique_id=353163547]
 
@@ -51,33 +53,39 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.482902, -0.09088522, 7.438
 [node name="EngineSound" parent="VehicleController/VehicleRigidBody" unique_id=155828429 node_paths=PackedStringArray("vehicle") instance=ExtResource("5_2jj31")]
 vehicle = NodePath("..")
 
-[node name="SpotGreen1" type="SpotLight3D" parent="VehicleController/VehicleRigidBody" unique_id=1628282634]
+[node name="SpotForward" type="Node3D" parent="VehicleController/VehicleRigidBody" unique_id=521755996]
+visible = false
+
+[node name="SpotGreen1" type="SpotLight3D" parent="VehicleController/VehicleRigidBody/SpotForward" unique_id=1628282634]
 transform = Transform3D(1, 0, 0, 0, 0.9434058, 0.3316406, 0, -0.3316406, 0.9434058, -0.39925957, 0.5322125, -0.5272913)
 light_color = Color(0.68111277, 1, 0.5836642, 1)
 light_energy = 14.704
 spot_range = 2.8920145
 spot_angle = 14.146227
 
-[node name="SpotRed1" type="SpotLight3D" parent="VehicleController/VehicleRigidBody" unique_id=1762005961]
-transform = Transform3D(-1, 2.903845e-08, -8.2459145e-08, 0, 0.9432227, 0.33216116, 8.742278e-08, 0.33216116, -0.9432227, -0.399, 0.821, 0.8)
-light_color = Color(0.92156863, 0, 0.23137255, 1)
-light_energy = 14.704
-spot_range = 3.237861
-spot_angle = 16.529554
-
-[node name="SpotRed2" type="SpotLight3D" parent="VehicleController/VehicleRigidBody" unique_id=1619537514]
-transform = Transform3D(-1, 5.015494e-08, -1.4242266e-07, 0, 0.94322264, 0.33216116, 1.509958e-07, 0.33216116, -0.94322264, 0.399, 0.821, 0.8)
-light_color = Color(0.92156863, 0, 0.23137255, 1)
-light_energy = 14.704
-spot_range = 3.237861
-spot_angle = 16.529554
-
-[node name="SpotGreen2" type="SpotLight3D" parent="VehicleController/VehicleRigidBody" unique_id=2140338406]
-transform = Transform3D(1, 0, 0, 0, 0.9434058, 0.3316406, 0, -0.3316406, 0.9434058, 0.399, 0.532, -0.5)
+[node name="SpotGreen2" type="SpotLight3D" parent="VehicleController/VehicleRigidBody/SpotForward" unique_id=2140338406]
+transform = Transform3D(1, 0, 0, 0, 0.9434058, 0.3316406, 0, -0.3316406, 0.9434058, 0.39900017, 0.532, -0.5)
 light_color = Color(0.68111277, 1, 0.5836642, 1)
 light_energy = 14.704
 spot_range = 2.8920145
 spot_angle = 14.146227
+
+[node name="SpotBack" type="Node3D" parent="VehicleController/VehicleRigidBody" unique_id=314014363]
+visible = false
+
+[node name="SpotRed2" type="SpotLight3D" parent="VehicleController/VehicleRigidBody/SpotBack" unique_id=1619537514]
+transform = Transform3D(-1, 5.015494e-08, -1.4242266e-07, 0, 0.94322264, 0.33216116, 1.509958e-07, 0.33216116, -0.94322264, 0.39900017, 0.821, 0.8000002)
+light_color = Color(0.92156863, 0, 0.23137255, 1)
+light_energy = 14.704
+spot_range = 3.237861
+spot_angle = 16.529554
+
+[node name="SpotRed1" type="SpotLight3D" parent="VehicleController/VehicleRigidBody/SpotBack" unique_id=1762005961]
+transform = Transform3D(-1, 2.903845e-08, -8.2459145e-08, 0, 0.9432227, 0.33216116, 8.742278e-08, 0.33216116, -0.9432227, -0.39900017, 0.821, 0.8000002)
+light_color = Color(0.92156863, 0, 0.23137255, 1)
+light_energy = 14.704
+spot_range = 3.237861
+spot_angle = 16.529554
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=53720086 node_paths=PackedStringArray("FollowThis")]
 transform = Transform3D(1, 0, 0, 0, 0.96455574, 0.26387942, 0, -0.26387942, 0.96455574, -8.4592495, 2.0067396, 12.885759)
@@ -90,7 +98,6 @@ FollowThis = NodePath("../VehicleController/VehicleRigidBody")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1765065575]
 transform = Transform3D(-0.6706218, 0.65327805, -0.35141787, -0.13337854, 0.35982502, 0.92343724, 0.72971016, 0.6661486, -0.1541732, 0, 12.166197, 10.894441)
 light_negative = true
-shadow_enabled = true
 shadow_opacity = 0.5
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2107520642]
