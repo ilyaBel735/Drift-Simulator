@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bs3ejjkbjceu"]
+
+[ext_resource type="Script" uid="uid://ci5htnx16s0gn" path="res://scripts/NewCameraController.cs" id="1_v4apc"]
+
+[node name="Camera3D" type="Camera3D" unique_id=1262305421 node_paths=PackedStringArray("FollowThis")]
+transform = Transform3D(1, 0, 0, 0, 0.96455574, 0.26387942, 0, -0.26387942, 0.96455574, 0, 0, 0)
+visible = false
+current = true
+fov = 45.6
+near = 0.005
+script = ExtResource("1_v4apc")
+FollowThis = NodePath("")
