@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d12038iyfoda7"]
+
+[ext_resource type="Script" uid="uid://b8rugx0ts56mm" path="res://scripts/bot_ai.gd" id="1_x8jxx"]
+
+[node name="BotAI" type="Node3D" unique_id=1956633035]
+script = ExtResource("1_x8jxx")
