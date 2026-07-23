@@ -57,7 +57,6 @@ public partial class NewCameraController : Camera3D
 
 		if (@event is InputEventKey input)
 		{
-			GD.Print(FollowHeight);
 			if (input.Keycode == Key.Down)
 			{
 				if (FollowHeight < 0.6f) return;
