@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/bot_car.gd" id="1_bot"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_bot_body"]
+size = Vector3(1.8, 0.7, 3.8)
+
+[sub_resource type="StandardMaterial3D" id="Material_bot_body"]
+albedo_color = Color(0.2, 0.6, 0.9, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bot_cabin"]
+size = Vector3(1.5, 0.5, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="Material_bot_cabin"]
+albedo_color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="BotCar" type="PathFollow3D"]
+rotation_mode = 2
+loop = true
+script = ExtResource("1_bot")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_bot_body")
+material_override = SubResource("Material_bot_body")
+
+[node name="Cabin" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.3)
+mesh = SubResource("BoxMesh_bot_cabin")
+material_override = SubResource("Material_bot_cabin")

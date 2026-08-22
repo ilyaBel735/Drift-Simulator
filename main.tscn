@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://baf2q16r3lthy"]
+
+[ext_resource type="Script" uid="uid://b7tjc5ullc67n" path="res://scripts/main.gd" id="1_main"]
+
+[node name="Main" type="Node3D" unique_id=433267551]
+script = ExtResource("1_main")
+bot_count = 10
