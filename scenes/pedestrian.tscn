@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/pedestrian.gd" id="1_ped"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ped"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ped"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_ped"]
+albedo_color = Color(0.9, 0.8, 0.6, 1)
+
+[node name="Pedestrian" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 0
+motion_mode = 1
+script = ExtResource("1_ped")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_ped")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_ped")
+material_override = SubResource("Material_ped")
