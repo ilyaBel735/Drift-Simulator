@@ -20,6 +20,11 @@ const GAS_STATION_SCENE = preload("res://scenes/gas_station.tscn")
 @export var random_seed := 2024
 @export var lane_markings := true
 @export var traffic_lights := true
+# Вероятность светофора на перекрёстке В ГОРОДЕ (1.0 = на каждом).
+@export_range(0.0, 1.0) var traffic_light_chance := 0.7
+# Прибавка к порогу дорог: чем больше, тем реже дороги (и перекрёстки).
+@export var village_road_sparsity := 0.12
+@export var nature_road_sparsity := 0.25
 
 # Настройки шума.
 @export var noise_seed := 2024
@@ -279,29 +284,28 @@ func _is_guaranteed_v(ix: int, iz: int) -> bool:
 func has_horizontal_road(ix: int, iz: int) -> bool:
 	if _is_guaranteed_h(ix, iz):
 		return true
-
 	if main_road_interval > 0 and posmod(iz, main_road_interval) == 0:
 		return true
-
 	var n := road_noise.get_noise_2d(ix + 0.5, iz)
-	var c := city_noise.get_noise_2d(ix + 0.5, iz)
-	var v := village_noise.get_noise_2d(ix + 0.5, iz)
-
-	return n > road_threshold or c > city_threshold or v > village_threshold
-
+	return n > _road_threshold_for(Vector2i(ix, iz))
 
 func has_vertical_road(ix: int, iz: int) -> bool:
 	if _is_guaranteed_v(ix, iz):
 		return true
-
 	if main_road_interval > 0 and posmod(ix, main_road_interval) == 0:
 		return true
-
 	var n := road_noise.get_noise_2d(ix, iz + 0.5)
-	var c := city_noise.get_noise_2d(ix, iz + 0.5)
-	var v := village_noise.get_noise_2d(ix, iz + 0.5)
+	return n > _road_threshold_for(Vector2i(ix, iz))
 
-	return n > road_threshold or c > city_threshold or v > village_threshold
+# В городе дороги плотные, в деревне реже, в лесу — в основном только прямые магистрали.
+func _road_threshold_for(chunk: Vector2i) -> float:
+	match get_biome(chunk):
+		Biome.VILLAGE:
+			return road_threshold + village_road_sparsity
+		Biome.NATURE:
+			return road_threshold + nature_road_sparsity
+		_:
+			return road_threshold
 
 
 func has_road_segment(from: Vector2i, direction: Vector2i) -> bool:
@@ -326,20 +330,19 @@ func intersection_has_cross_roads(intersection: Vector2i) -> bool:
 
 	return h and v
 
-
 func has_traffic_lights_at(intersection: Vector2i) -> bool:
 	if not traffic_lights:
 		return false
-
 	if not intersection_has_cross_roads(intersection):
 		return false
-
-	if guaranteed_radius >= 0:
-		if abs(intersection.x) <= guaranteed_radius and abs(intersection.y) <= guaranteed_radius:
-			return true
-
-	var c := city_noise.get_noise_2d(intersection.x, intersection.y)
-	return c > city_threshold
+	# Вне города светофоров нет: в лесу и деревне перекрёстки нерегулируемые.
+	if get_biome(intersection) != Biome.CITY:
+		return false
+	# В городе светофор ставим не на каждом перекрёстке.
+	if traffic_light_chance >= 1.0:
+		return true
+	var h := hash("%d|%d|light|%d" % [intersection.x, intersection.y, random_seed])
+	return float(h % 1000) / 1000.0 < traffic_light_chance
 
 
 func is_pedestrian_chunk(chunk: Vector2i) -> bool:
