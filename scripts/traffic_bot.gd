@@ -12,11 +12,11 @@ enum RefuelState { NONE, TO_QUEUE, WAIT_QUEUE, TO_PUMP, REFUELING, EXIT }
 @export var yellow_commit_distance := 12.0
 
 @export var fuel_max := 100.0
-@export var fuel_use_per_second := 0.35
-@export var refuel_threshold := 35.0
+@export var fuel_use_per_second := 0.5
+@export var refuel_threshold := 40.0
 @export var refuel_chance := 0.75
-@export var refuel_time_min := 4.0
-@export var refuel_time_max := 8.0
+@export var refuel_time_min := 40.0
+@export var refuel_time_max := 65.0
 
 var spacing := 48.0
 var road_width := 12.0
@@ -78,7 +78,7 @@ func setup(
 	points = [_stop_line_point(current_intersection, dir)]
 
 	current_speed = max_speed * 0.4
-	fuel = randf_range(50.0, fuel_max)
+	fuel = randf_range(20.0, 45.0)
 
 	if is_inside_tree():
 		update_initial_orientation()
@@ -95,7 +95,7 @@ func update_initial_orientation() -> void:
 
 func _physics_process(delta: float) -> void:
 	if fuel <= 0.0:
-		queue_free()
+		_stop(delta)
 		return
 
 	if refuel_state != RefuelState.REFUELING:

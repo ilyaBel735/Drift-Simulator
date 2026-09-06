@@ -48,8 +48,11 @@ func setup(
         Vector3(0.0, 0.0, -2.0),
         Vector3(6.0, 0.0, -2.0),
     ]
+    
+    var label = get_node_or_null("PriceLabel")
 
-    _build_visuals(pad_width, pad_depth, rng)
+    if label:
+        label.text = _make_price_text(rng)
 
 
 func _process(delta: float) -> void:
@@ -176,78 +179,6 @@ func _clean_queues() -> void:
             cleaned_west.append(bot)
 
     waiting_west = cleaned_west
-
-
-func _build_visuals(
-    pad_width: float,
-    pad_depth: float,
-    rng: RandomNumberGenerator
-) -> void:
-    # Площадка.
-    var pad := MeshInstance3D.new()
-
-    var pad_mesh := BoxMesh.new()
-    pad_mesh.size = Vector3(pad_width, 0.2, pad_depth)
-
-    pad.mesh = pad_mesh
-    pad.position = Vector3(0.0, 0.05, 0.0)
-
-    var pad_mat := StandardMaterial3D.new()
-    pad_mat.albedo_color = Color(0.45, 0.45, 0.47)
-
-    pad.material_override = pad_mat
-
-    add_child(pad)
-
-    # Колонки.
-    for p in pump_locals:
-        var pump := MeshInstance3D.new()
-
-        var pump_mesh := BoxMesh.new()
-        pump_mesh.size = Vector3(0.6, 1.2, 0.4)
-
-        pump.mesh = pump_mesh
-        pump.position = p + Vector3(0.0, 0.6, 0.0)
-
-        var pump_mat := StandardMaterial3D.new()
-        pump_mat.albedo_color = Color(0.8, 0.2, 0.2)
-
-        pump.material_override = pump_mat
-
-        add_child(pump)
-
-    # Билборд.
-    var board := MeshInstance3D.new()
-
-    var board_mesh := BoxMesh.new()
-    board_mesh.size = Vector3(6.0, 3.0, 0.3)
-
-    board.mesh = board_mesh
-    board.position = Vector3(8.0, 2.5, -12.0)
-
-    var board_mat := StandardMaterial3D.new()
-    board_mat.albedo_color = Color(0.1, 0.12, 0.16)
-
-    board.material_override = board_mat
-
-    add_child(board)
-
-    # Цены.
-    var label := Label3D.new()
-
-    label.text = _make_price_text(rng)
-    label.position = Vector3(8.0, 2.5, -12.25)
-    label.rotation_degrees = Vector3(0.0, 180.0, 0.0)
-
-    label.pixel_size = 0.015
-    label.font_size = 48
-
-    label.modulate = Color(1.0, 1.0, 1.0)
-    label.outline_size = 6
-    label.outline_modulate = Color(0.0, 0.0, 0.0, 1.0)
-
-    add_child(label)
-
 
 func _make_price_text(rng: RandomNumberGenerator) -> String:
     var a92 := rng.randf_range(30.0, 80.0)

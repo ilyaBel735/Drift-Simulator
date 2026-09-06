@@ -30,13 +30,11 @@ shape = SubResource("BoxShape3D_bot")
 
 [node name="Body" type="MeshInstance3D" parent="." unique_id=1524845178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-visible = false
 material_override = SubResource("Material_bot_body")
 mesh = SubResource("BoxMesh_bot_body")
 
 [node name="Cabin" type="MeshInstance3D" parent="Body" unique_id=29665300]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.3)
-visible = false
 material_override = SubResource("Material_bot_cabin")
 mesh = SubResource("BoxMesh_bot_cabin")
 
@@ -47,3 +45,4 @@ collision_mask = 3
 
 [node name="Sketchfab_Scene" parent="." unique_id=1702566913 instance=ExtResource("2_wibgo")]
 transform = Transform3D(-80, 0, -6.9938224e-06, 0, 80, 0, 6.9938224e-06, 0, -80, 0, 0, 0)
+visible = false

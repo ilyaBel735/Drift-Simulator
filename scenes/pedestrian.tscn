@@ -23,7 +23,9 @@ script = ExtResource("1_ped")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_ped")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
+[node name="Model" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Model"]
 mesh = SubResource("CapsuleMesh_ped")
 material_override = SubResource("Material_ped")
