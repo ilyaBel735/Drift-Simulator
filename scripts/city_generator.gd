@@ -23,10 +23,18 @@ const GAS_STATION_SCENE = preload("res://scenes/gas_station.tscn")
 
 # Настройки шума.
 @export var noise_seed := 2024
-@export var city_frequency := 0.05
+@export var city_frequency := 0.025      # было 0.05
 @export var road_frequency := 0.07
 @export var detail_frequency := 0.18
-@export var village_frequency := 0.045
+@export var village_frequency := 0.022   # было 0.045
+
+# --- НОВЫЕ ПАРАМЕТРЫ ---
+# Сколько лесных чанков гарантированно между городом и деревней.
+@export var biome_buffer_radius := 3
+# Порог лесных островков внутри деревни (меньше = островков больше).
+@export var village_forest_threshold := 0.32
+
+
 
 # Пороги.
 # Чем ниже city_threshold, тем больше города.
@@ -51,6 +59,21 @@ const GAS_STATION_SCENE = preload("res://scenes/gas_station.tscn")
 @export var origin_radius := 2
 @export var keep_origin_loaded := true
 @export var update_interval := 0.4
+
+# ----------------------------------
+# Циклические биомы: ГОРОД -> ЛЕС -> ДЕРЕВНЯ -> ЛЕС -> ...
+# ----------------------------------
+# Ширина одного биома в чанках. Больше = крупнее все биомы и дольше проезд через лес.
+@export var biome_size := 20
+# Множители ширины (1.0 = ровно biome_size чанков).
+@export var city_width := 1.0
+@export var forest_width := 1.0
+@export var village_width := 1.0
+# Волнистость границ (0 = ровные диагональные полосы, держать < 0.5).
+@export var edge_frequency := 0.06
+@export var edge_noise_amount := 0.35
+# Сдвиг фазы цикла. Подстрой, чтобы выезд из стартового города начинался с леса.
+@export var cycle_offset := 1.35
 
 var gas_stations := {}
 
@@ -88,6 +111,8 @@ var light_materials := {}
 
 var village_roof_mesh: PrismMesh
 var village_roof_material: StandardMaterial3D
+
+var edge_noise := FastNoiseLite.new()
 
 
 func _ready() -> void:
@@ -139,6 +164,10 @@ func _setup_noise() -> void:
 	road_noise.frequency = road_frequency
 	detail_noise.frequency = detail_frequency
 	village_noise.frequency = village_frequency
+	
+	edge_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	edge_noise.seed = noise_seed + 404
+	edge_noise.frequency = edge_frequency
 
 
 func _district_value(chunk: Vector2i) -> float:
@@ -159,21 +188,63 @@ func _village_density(value: float) -> float:
 	return clampf(v, 0.0, 1.0)
 
 
+
 func get_biome(chunk: Vector2i) -> int:
+	# Стартовая зона всегда город.
 	if _is_guaranteed_chunk(chunk):
 		return Biome.CITY
+	return _cycle_biome(chunk)
 
+# Биомы всегда идут строгим циклом:
+# ГОРОД -> ЛЕС -> ДЕРЕВНЯ -> ЛЕС -> ГОРОД -> ...
+# Лес стоит между любыми городом и деревней, поэтому, въехав в лес,
+# ты всегда знаешь, что впереди смена биома.
+func _cycle_biome(chunk: Vector2i) -> int:
+	var wob := edge_noise.get_noise_2d(chunk.x + 0.5, chunk.y + 0.5) * edge_noise_amount
+	var axis := float(chunk.x + chunk.y) / float(biome_size) + wob + cycle_offset
+	var cycle := city_width + forest_width + village_width + forest_width
+	var t := posmod(axis, cycle)
+
+	if t < city_width:
+		return Biome.CITY
+	t -= city_width
+	if t < forest_width:
+		return Biome.NATURE
+	t -= forest_width
+	if t < village_width:
+		return Biome.VILLAGE
+	return Biome.NATURE
+
+# "Сырой" биом по шумам, без буферов и вкраплений.
+func _raw_biome(chunk: Vector2i) -> int:
 	var district := _district_value(chunk)
-
 	if district > city_threshold:
 		return Biome.CITY
 
 	var village := _village_value(chunk)
-
 	if village > village_threshold:
 		return Biome.VILLAGE
 
 	return Biome.NATURE
+
+# Есть ли город (обычный или стартовый) в радиусе radius чанков от данного.
+func _city_within(chunk: Vector2i, radius: int) -> bool:
+	if radius <= 0:
+		return false
+	for x in range(chunk.x - radius, chunk.x + radius + 1):
+		for y in range(chunk.y - radius, chunk.y + radius + 1):
+			if x == chunk.x and y == chunk.y:
+				continue
+			var other := Vector2i(x, y)
+			if _is_guaranteed_chunk(other):
+				return true
+			if _district_value(other) > city_threshold:
+				return true
+	return false
+
+# Детерминированный "лесной островок" внутри деревни.
+func _is_village_forest_patch(chunk: Vector2i) -> bool:
+	return detail_noise.get_noise_2d(chunk.x + 0.5, chunk.y + 0.5) > village_forest_threshold
 
 
 func _is_guaranteed_chunk(chunk: Vector2i) -> bool:
@@ -545,13 +616,10 @@ func _generate_village(parent: Node3D, rng: RandomNumberGenerator, density: floa
 
 func _generate_nature(parent: Node3D, rng: RandomNumberGenerator, chunk: Vector2i) -> void:
 	var district := _district_value(chunk)
-
-	var tree_count := rng.randi_range(0, 6)
-
+	var tree_count := rng.randi_range(3, 8)   # было 0..6 — лес стал плотнее
 	# Если это почти городская зона, деревьев меньше.
 	if district > -0.2:
 		tree_count = int(min(tree_count, 2))
-
 	for i in tree_count:
 		var pos := _random_nature_local(rng)
 		_add_tree(parent, pos, rng)
