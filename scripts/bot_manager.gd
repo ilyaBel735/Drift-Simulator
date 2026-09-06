@@ -62,8 +62,10 @@ func _clean_bots() -> void:
     var valid := []
 
     for bot in active_bots:
-        if is_instance_valid(bot):
-            valid.append(bot)
+        var b := bot as TrafficBot
+
+        if is_instance_valid(b):
+            valid.append(b)
 
     active_bots = valid
 
@@ -72,12 +74,24 @@ func _despawn_far_bots() -> void:
     var remove := []
 
     for bot in active_bots:
-        if bot.global_position.distance_to(target.global_position) > despawn_distance:
-            remove.append(bot)
+        var b := bot as TrafficBot
+
+        if not is_instance_valid(b):
+            continue
+
+        var far_away: bool = bool(
+            b.global_position.distance_to(target.global_position) > despawn_distance
+        )
+
+        if far_away:
+            remove.append(b)
 
     for bot in remove:
         active_bots.erase(bot)
-        bot.queue_free()
+
+        var b := bot as TrafficBot
+        if is_instance_valid(b):
+            b.queue_free()
 
 
 func _try_spawn_one() -> void:
@@ -85,15 +99,27 @@ func _try_spawn_one() -> void:
         return
 
     var spacing := city.spacing
+
     if spacing <= 0.0:
         return
 
     var lane := city.road_width * 0.25
 
-    for attempt in 40:
+    for attempt in 60:
         var chunk := _random_chunk_near_player(spacing)
 
-        var horizontal := randf() < 0.5
+        var road_options := []
+
+        if city.has_horizontal_road(chunk.x, chunk.y):
+            road_options.append(0)
+
+        if city.has_vertical_road(chunk.x, chunk.y):
+            road_options.append(1)
+
+        if road_options.is_empty():
+            continue
+
+        var horizontal: bool = road_options[randi_range(0, road_options.size() - 1)] == 0
 
         var dir2 := Vector2i(1, 0)
         var start := Vector3.ZERO
@@ -139,6 +165,7 @@ func _try_spawn_one() -> void:
         if bot == null:
             return
 
+        bot.city = city
         bot.max_speed = randf_range(9.0, 14.0)
 
         add_child(bot)
@@ -163,8 +190,10 @@ func _random_chunk_near_player(spacing: float) -> Vector2i:
 
 func _too_close_to_bots(pos: Vector3) -> bool:
     for bot in active_bots:
-        if is_instance_valid(bot):
-            if bot.global_position.distance_to(pos) < min_distance_between_bots:
+        var b := bot as TrafficBot
+
+        if is_instance_valid(b):
+            if b.global_position.distance_to(pos) < min_distance_between_bots:
                 return true
 
     return false

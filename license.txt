@@ -1,0 +1,11 @@
+Model Information:
+* title:	2022 Chery Tiggo 8 Pro e+
+* source:	https://sketchfab.com/3d-models/2022-chery-tiggo-8-pro-e-93f32e8306b440f49d26544b9c20a45e
+* author:	Ddiaz Design (https://sketchfab.com/ddiaz-design)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "2022 Chery Tiggo 8 Pro e+" (https://sketchfab.com/3d-models/2022-chery-tiggo-8-pro-e-93f32e8306b440f49d26544b9c20a45e) by Ddiaz Design (https://sketchfab.com/ddiaz-design) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
