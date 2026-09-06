@@ -1,6 +1,8 @@
 class_name CityGenerator
 extends Node3D
 
+enum Biome { NATURE, VILLAGE, CITY }
+
 @export var spacing := 48.0
 @export var road_width := 12.0
 @export var building_margin := 4.0
@@ -10,18 +12,39 @@ extends Node3D
 @export var lane_markings := true
 @export var traffic_lights := true
 
+# Настройки шума.
+@export var noise_seed := 2024
+@export var city_frequency := 0.05
+@export var road_frequency := 0.07
+@export var detail_frequency := 0.18
+@export var village_frequency := 0.045
+
+# Пороги.
+# Чем ниже city_threshold, тем больше города.
+# Чем ниже road_threshold, тем больше дорог.
+# Чем ниже village_threshold, тем больше деревень.
+@export var city_threshold := -0.10
+@export var road_threshold := -0.05
+@export var pedestrian_threshold := -0.35
+@export var village_threshold := 0.10
+
+# Зона рядом со стартом, где гарантированно есть дороги и город.
+@export var guaranteed_radius := 2
+
+# Основные дороги, которые всегда существуют.
+# Например, если 3, то каждая третья линия дороги будет гарантированной.
+# Если поставить 0, гарантированных линий не будет.
+@export var main_road_interval := 3
+
 # Радиус генерации вокруг игрока.
 @export var view_radius := 3
-
-# Радиус, за которым чанки удаляются.
 @export var unload_radius := 5
-
-# Держать загруженной стартовую зону вокруг нуля.
 @export var origin_radius := 2
 @export var keep_origin_loaded := true
-
-# Как часто проверять, нужно ли подгружать новые чанки.
 @export var update_interval := 0.4
+@export var gas_station_chance := 0.12
+
+var gas_stations := {}
 
 var target: Node3D
 
@@ -30,6 +53,11 @@ var last_center_chunk := Vector2i.ZERO
 var initialized := false
 var update_timer := 0.0
 
+var city_noise := FastNoiseLite.new()
+var road_noise := FastNoiseLite.new()
+var detail_noise := FastNoiseLite.new()
+var village_noise := FastNoiseLite.new()
+
 var ground_mesh: PlaneMesh
 var road_h_mesh: PlaneMesh
 var road_v_mesh: PlaneMesh
@@ -37,12 +65,26 @@ var line_h_mesh: PlaneMesh
 var line_v_mesh: PlaneMesh
 
 var ground_material: StandardMaterial3D
+var urban_ground_material: StandardMaterial3D
+var village_ground_material: StandardMaterial3D
+
 var road_material: StandardMaterial3D
+var village_road_material: StandardMaterial3D
 var line_material: StandardMaterial3D
+
 var building_materials := []
+var village_materials := []
 
 var light_meshes := {}
 var light_materials := {}
+
+var tree_trunk_mesh: CylinderMesh
+var tree_crown_mesh: SphereMesh
+var tree_trunk_material: StandardMaterial3D
+var tree_crown_material: StandardMaterial3D
+
+var village_roof_mesh: PrismMesh
+var village_roof_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -50,6 +92,10 @@ func _ready() -> void:
         randomize()
         random_seed = randi()
 
+    if noise_seed == 0:
+        noise_seed = randi()
+
+    _setup_noise()
     _setup_resources()
     _update_chunks(true)
 
@@ -63,11 +109,6 @@ func update_now() -> void:
     _update_chunks(true)
 
 
-func get_bot_loop_min_max() -> Vector2:
-    # Оставлено для совместимости, если ты захочешь вернуть старые маршруты.
-    return Vector2(-spacing, spacing)
-
-
 func _physics_process(delta: float) -> void:
     update_timer += delta
 
@@ -75,6 +116,602 @@ func _physics_process(delta: float) -> void:
         update_timer = 0.0
         _update_chunks(false)
 
+
+# ----------------------------------
+# Noise helpers
+# ----------------------------------
+
+func _setup_noise() -> void:
+    city_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+    road_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+    detail_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+    village_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+
+    city_noise.seed = noise_seed
+    road_noise.seed = noise_seed + 101
+    detail_noise.seed = noise_seed + 202
+    village_noise.seed = noise_seed + 303
+
+    city_noise.frequency = city_frequency
+    road_noise.frequency = road_frequency
+    detail_noise.frequency = detail_frequency
+    village_noise.frequency = village_frequency
+
+
+func _district_value(chunk: Vector2i) -> float:
+    return city_noise.get_noise_2d(chunk.x + 0.5, chunk.y + 0.5)
+
+
+func _village_value(chunk: Vector2i) -> float:
+    return village_noise.get_noise_2d(chunk.x + 0.5, chunk.y + 0.5)
+
+
+func _district_density(value: float) -> float:
+    var v := (value - city_threshold) / maxf(0.001, 1.0 - city_threshold)
+    return clampf(v, 0.0, 1.0)
+
+
+func _village_density(value: float) -> float:
+    var v := (value - village_threshold) / maxf(0.001, 1.0 - village_threshold)
+    return clampf(v, 0.0, 1.0)
+
+
+func get_biome(chunk: Vector2i) -> int:
+    if _is_guaranteed_chunk(chunk):
+        return Biome.CITY
+
+    var district := _district_value(chunk)
+
+    if district > city_threshold:
+        return Biome.CITY
+
+    var village := _village_value(chunk)
+
+    if village > village_threshold:
+        return Biome.VILLAGE
+
+    return Biome.NATURE
+
+
+func _is_guaranteed_chunk(chunk: Vector2i) -> bool:
+    if guaranteed_radius < 0:
+        return false
+
+    return abs(chunk.x) <= guaranteed_radius and abs(chunk.y) <= guaranteed_radius
+
+
+func _is_guaranteed_h(ix: int, iz: int) -> bool:
+    if guaranteed_radius < 0:
+        return false
+
+    return abs(iz) <= guaranteed_radius and (
+        abs(ix) <= guaranteed_radius or abs(ix + 1) <= guaranteed_radius
+    )
+
+
+func _is_guaranteed_v(ix: int, iz: int) -> bool:
+    if guaranteed_radius < 0:
+        return false
+
+    return abs(ix) <= guaranteed_radius and (
+        abs(iz) <= guaranteed_radius or abs(iz + 1) <= guaranteed_radius
+    )
+
+
+# ----------------------------------
+# Public road queries
+# ----------------------------------
+
+func has_horizontal_road(ix: int, iz: int) -> bool:
+    if _is_guaranteed_h(ix, iz):
+        return true
+
+    if main_road_interval > 0 and posmod(iz, main_road_interval) == 0:
+        return true
+
+    var n := road_noise.get_noise_2d(ix + 0.5, iz)
+    var c := city_noise.get_noise_2d(ix + 0.5, iz)
+    var v := village_noise.get_noise_2d(ix + 0.5, iz)
+
+    return n > road_threshold or c > city_threshold or v > village_threshold
+
+
+func has_vertical_road(ix: int, iz: int) -> bool:
+    if _is_guaranteed_v(ix, iz):
+        return true
+
+    if main_road_interval > 0 and posmod(ix, main_road_interval) == 0:
+        return true
+
+    var n := road_noise.get_noise_2d(ix, iz + 0.5)
+    var c := city_noise.get_noise_2d(ix, iz + 0.5)
+    var v := village_noise.get_noise_2d(ix, iz + 0.5)
+
+    return n > road_threshold or c > city_threshold or v > village_threshold
+
+
+func has_road_segment(from: Vector2i, direction: Vector2i) -> bool:
+    if direction == Vector2i(1, 0):
+        return has_horizontal_road(from.x, from.y)
+
+    if direction == Vector2i(-1, 0):
+        return has_horizontal_road(from.x - 1, from.y)
+
+    if direction == Vector2i(0, 1):
+        return has_vertical_road(from.x, from.y)
+
+    if direction == Vector2i(0, -1):
+        return has_vertical_road(from.x, from.y - 1)
+
+    return false
+
+
+func intersection_has_cross_roads(intersection: Vector2i) -> bool:
+    var h := has_horizontal_road(intersection.x, intersection.y) or has_horizontal_road(intersection.x - 1, intersection.y)
+    var v := has_vertical_road(intersection.x, intersection.y) or has_vertical_road(intersection.x, intersection.y - 1)
+
+    return h and v
+
+
+func has_traffic_lights_at(intersection: Vector2i) -> bool:
+    if not traffic_lights:
+        return false
+
+    if not intersection_has_cross_roads(intersection):
+        return false
+
+    if guaranteed_radius >= 0:
+        if abs(intersection.x) <= guaranteed_radius and abs(intersection.y) <= guaranteed_radius:
+            return true
+
+    var c := city_noise.get_noise_2d(intersection.x, intersection.y)
+    return c > city_threshold
+
+
+func is_pedestrian_chunk(chunk: Vector2i) -> bool:
+    if _is_guaranteed_chunk(chunk):
+        return true
+
+    var biome := get_biome(chunk)
+
+    if biome == Biome.CITY or biome == Biome.VILLAGE:
+        return true
+
+    return _district_value(chunk) > pedestrian_threshold
+
+
+# ----------------------------------
+# Chunk update
+# ----------------------------------
+
+func _update_chunks(force: bool) -> void:
+    if not is_inside_tree():
+        return
+
+    if spacing <= 0.0:
+        return
+
+    var center_chunk := Vector2i.ZERO
+
+    if is_instance_valid(target):
+        center_chunk = Vector2i(
+            int(floor(target.global_position.x / spacing)),
+            int(floor(target.global_position.z / spacing))
+        )
+    elif not keep_origin_loaded:
+        return
+
+    if initialized and not force and center_chunk == last_center_chunk:
+        return
+
+    last_center_chunk = center_chunk
+    initialized = true
+
+    var needed := {}
+
+    _add_needed_chunks(needed, center_chunk, view_radius)
+
+    if keep_origin_loaded:
+        _add_needed_chunks(needed, Vector2i.ZERO, origin_radius)
+
+    for c in needed.keys():
+        if not chunks.has(c):
+            var chunk_root := _generate_chunk(c)
+            chunks[c] = chunk_root
+            add_child(chunk_root)
+
+    var to_erase := []
+
+    for c in chunks.keys():
+        var far_from_target := true
+
+        if is_instance_valid(target):
+            far_from_target = Vector2(float(c.x), float(c.y)).distance_to(
+                Vector2(float(center_chunk.x), float(center_chunk.y))
+            ) > unload_radius
+
+        var far_from_origin := true
+
+        if keep_origin_loaded:
+            far_from_origin = Vector2(float(c.x), float(c.y)).distance_to(
+                Vector2.ZERO
+            ) > float(origin_radius) + 1.0
+
+        if far_from_target and far_from_origin:
+            to_erase.append(c)
+
+    for c in to_erase:
+        var chunk_root = chunks[c]
+        chunks.erase(c)
+
+        if chunk_root.has_meta("gas_station_key"):
+            gas_stations.erase(chunk_root.get_meta("gas_station_key"))
+
+        if is_instance_valid(chunk_root):
+            chunk_root.queue_free()
+
+
+func _add_needed_chunks(dict: Dictionary, center: Vector2i, radius: int) -> void:
+    for x in range(center.x - radius, center.x + radius + 1):
+        for y in range(center.y - radius, center.y + radius + 1):
+            dict[Vector2i(x, y)] = true
+
+
+# ----------------------------------
+# Chunk generation
+# ----------------------------------
+
+func _generate_chunk(chunk: Vector2i) -> Node3D:
+    var root := Node3D.new()
+    root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
+    root.position = Vector3(
+        (chunk.x + 0.5) * spacing,
+        0.0,
+        (chunk.y + 0.5) * spacing
+    )
+
+    var rng := RandomNumberGenerator.new()
+    rng.seed = _chunk_seed(chunk)
+
+    var biome := get_biome(chunk)
+
+    var district := _district_value(chunk)
+    var guaranteed := _is_guaranteed_chunk(chunk)
+
+    var density := _district_density(district)
+    if guaranteed:
+        density = maxf(density, 0.4)
+
+    var ground_mat: Material = ground_material
+
+    if biome == Biome.CITY:
+        ground_mat = urban_ground_material
+    elif biome == Biome.VILLAGE:
+        ground_mat = village_ground_material
+
+    var road_mat: Material = road_material
+
+    if biome == Biome.VILLAGE:
+        road_mat = village_road_material
+
+    _add_mesh(root, ground_mesh, ground_mat, Vector3.ZERO)
+
+    var y_offset := float(posmod(chunk.x + chunk.y, 8)) * 0.00025
+
+    var h_road := has_horizontal_road(chunk.x, chunk.y)
+    var v_road := has_vertical_road(chunk.x, chunk.y)
+
+    if h_road:
+        _add_mesh(
+            root,
+            road_h_mesh,
+            road_mat,
+            Vector3(0.0, 0.01 + y_offset, -spacing * 0.5)
+        )
+
+        if lane_markings and biome == Biome.CITY:
+            _add_mesh(
+                root,
+                line_h_mesh,
+                line_material,
+                Vector3(0.0, 0.03 + y_offset, -spacing * 0.5)
+            )
+
+    if v_road:
+        _add_mesh(
+            root,
+            road_v_mesh,
+            road_mat,
+            Vector3(-spacing * 0.5, 0.02 + y_offset, 0.0)
+        )
+
+        if lane_markings and biome == Biome.CITY:
+            _add_mesh(
+                root,
+                line_v_mesh,
+                line_material,
+                Vector3(-spacing * 0.5, 0.04 + y_offset, 0.0)
+            )
+
+    if traffic_lights and has_traffic_lights_at(Vector2i(chunk.x, chunk.y)):
+        _create_traffic_lights(root, chunk)
+
+    var has_station := false
+
+    if biome == Biome.CITY and h_road and rng.randf() < gas_station_chance:
+        _generate_gas_station(root, chunk, rng)
+        has_station = true
+
+    if not has_station:
+        match biome:
+            Biome.CITY:
+                _generate_buildings(root, rng, density)
+            Biome.VILLAGE:
+                _generate_village(root, rng, _village_density(_village_value(chunk)))
+            _:
+                _generate_nature(root, rng, chunk)
+
+    return root
+
+
+func _generate_buildings(parent: Node3D, rng: RandomNumberGenerator, density: float) -> void:
+    var inner_half := spacing * 0.5 - road_width * 0.5 - building_margin
+    var inner_size := inner_half * 2.0
+
+    if inner_size < 8.0:
+        return
+
+    var lot_size := inner_size / 2.0
+
+    var building_chance := clampf(0.2 + density * 0.7, 0.0, 0.95)
+    var height_multiplier := lerpf(0.7, 1.4, density)
+
+    for lx in 2:
+        for lz in 2:
+            if rng.randf() > building_chance:
+                continue
+
+            var lot_center := Vector3(
+                -inner_half + lot_size * (lx + 0.5),
+                0.0,
+                -inner_half + lot_size * (lz + 0.5)
+            )
+
+            var w := rng.randf_range(lot_size * 0.55, lot_size * 0.92)
+            var d := rng.randf_range(lot_size * 0.55, lot_size * 0.92)
+            var h := rng.randf_range(building_min_height, building_max_height) * height_multiplier
+
+            var jitter_x := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - w) * 0.25)
+            var jitter_z := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - d) * 0.25)
+
+            _add_building(
+                parent,
+                lot_center + Vector3(jitter_x, 0.0, jitter_z),
+                w,
+                h,
+                d,
+                rng
+            )
+
+
+func _generate_village(parent: Node3D, rng: RandomNumberGenerator, density: float) -> void:
+    var inner_half := spacing * 0.5 - road_width * 0.5 - building_margin
+    var inner_size := inner_half * 2.0
+
+    if inner_size < 10.0:
+        return
+
+    var lot_size := inner_size / 2.0
+
+    var house_chance := clampf(0.25 + density * 0.5, 0.0, 0.85)
+
+    for lx in 2:
+        for lz in 2:
+            if rng.randf() > house_chance:
+                continue
+
+            var lot_center := Vector3(
+                -inner_half + lot_size * (lx + 0.5),
+                0.0,
+                -inner_half + lot_size * (lz + 0.5)
+            )
+
+            var w := rng.randf_range(lot_size * 0.35, lot_size * 0.65)
+            var d := rng.randf_range(lot_size * 0.35, lot_size * 0.65)
+            var h := rng.randf_range(3.0, 6.5)
+
+            var jitter_x := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - w) * 0.25)
+            var jitter_z := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - d) * 0.25)
+
+            _add_village_house(
+                parent,
+                lot_center + Vector3(jitter_x, 0.0, jitter_z),
+                w,
+                h,
+                d,
+                rng
+            )
+
+    # Немного деревьев рядом с деревней.
+    var tree_count := rng.randi_range(1, 4)
+
+    for i in tree_count:
+        var pos := _random_nature_local(rng)
+        _add_tree(parent, pos, rng)
+
+
+func _generate_nature(parent: Node3D, rng: RandomNumberGenerator, chunk: Vector2i) -> void:
+    var district := _district_value(chunk)
+
+    var tree_count := rng.randi_range(0, 6)
+
+    # Если это почти городская зона, деревьев меньше.
+    if district > -0.2:
+        tree_count = int(min(tree_count, 2))
+
+    for i in tree_count:
+        var pos := _random_nature_local(rng)
+        _add_tree(parent, pos, rng)
+
+
+func _random_nature_local(rng: RandomNumberGenerator) -> Vector3:
+    var inner := maxf(4.0, spacing * 0.5 - road_width * 0.5 - building_margin)
+
+    return Vector3(
+        rng.randf_range(-inner, inner),
+        0.0,
+        rng.randf_range(-inner, inner)
+    )
+
+
+func _add_building(
+    parent: Node3D,
+    local_position: Vector3,
+    w: float,
+    h: float,
+    d: float,
+    rng: RandomNumberGenerator
+) -> void:
+    var body := StaticBody3D.new()
+    body.position = local_position
+    body.collision_mask = 0
+
+    var mesh := MeshInstance3D.new()
+    var box := BoxMesh.new()
+    box.size = Vector3(w, h, d)
+
+    mesh.mesh = box
+    mesh.position = Vector3(0.0, h * 0.5, 0.0)
+    mesh.material_override = building_materials[rng.randi_range(0, building_materials.size() - 1)]
+
+    var col := CollisionShape3D.new()
+    var shape := BoxShape3D.new()
+    shape.size = Vector3(w, h, d)
+
+    col.shape = shape
+    col.position = Vector3(0.0, h * 0.5, 0.0)
+
+    body.add_child(mesh)
+    body.add_child(col)
+
+    parent.add_child(body)
+
+
+func _add_village_house(
+    parent: Node3D,
+    local_position: Vector3,
+    w: float,
+    h: float,
+    d: float,
+    rng: RandomNumberGenerator
+) -> void:
+    var body := StaticBody3D.new()
+    body.position = local_position
+    body.collision_mask = 0
+
+    var mesh := MeshInstance3D.new()
+    var box := BoxMesh.new()
+    box.size = Vector3(w, h, d)
+
+    mesh.mesh = box
+    mesh.position = Vector3(0.0, h * 0.5, 0.0)
+    mesh.material_override = village_materials[rng.randi_range(0, village_materials.size() - 1)]
+
+    var col := CollisionShape3D.new()
+    var shape := BoxShape3D.new()
+    shape.size = Vector3(w, h, d)
+
+    col.shape = shape
+    col.position = Vector3(0.0, h * 0.5, 0.0)
+
+    var roof := MeshInstance3D.new()
+    roof.mesh = village_roof_mesh
+    roof.material_override = village_roof_material
+
+    var roof_height := minf(2.0, maxf(0.8, minf(w, d) * 0.35))
+    roof.scale = Vector3(w * 1.15, roof_height, d * 1.15)
+    roof.position = Vector3(0.0, h + roof_height * 0.5, 0.0)
+
+    body.add_child(mesh)
+    body.add_child(col)
+    body.add_child(roof)
+
+    parent.add_child(body)
+
+
+func _add_tree(parent: Node3D, local_position: Vector3, rng: RandomNumberGenerator) -> void:
+    if tree_trunk_mesh == null or tree_crown_mesh == null:
+        return
+
+    var trunk := MeshInstance3D.new()
+    trunk.mesh = tree_trunk_mesh
+    trunk.material_override = tree_trunk_material
+    trunk.position = local_position + Vector3(0.0, 0.6, 0.0)
+
+    var crown := MeshInstance3D.new()
+    crown.mesh = tree_crown_mesh
+    crown.material_override = tree_crown_material
+    crown.position = local_position + Vector3(0.0, 1.7, 0.0)
+
+    var s := rng.randf_range(0.7, 1.3)
+    crown.scale = Vector3(s, s, s)
+
+    parent.add_child(trunk)
+    parent.add_child(crown)
+
+
+func _add_mesh(
+    parent: Node3D,
+    mesh: Mesh,
+    material: Material,
+    local_position: Vector3
+) -> MeshInstance3D:
+    var mi := MeshInstance3D.new()
+    mi.mesh = mesh
+    mi.material_override = material
+    mi.position = local_position
+
+    parent.add_child(mi)
+
+    return mi
+
+
+func _create_traffic_lights(root: Node3D, chunk: Vector2i) -> void:
+    var intersection := Vector2i(chunk.x, chunk.y)
+
+    var directions := [
+        Vector2i(1, 0),
+        Vector2i(-1, 0),
+        Vector2i(0, 1),
+        Vector2i(0, -1)
+    ]
+
+    for d in directions:
+        var light := TrafficLight.new()
+        light.setup(intersection, d, light_meshes, light_materials)
+        light.position = _traffic_light_local_position(d)
+        root.add_child(light)
+
+
+func _traffic_light_local_position(direction: Vector2i) -> Vector3:
+    var local_intersection := Vector3(-spacing * 0.5, 0.0, -spacing * 0.5)
+
+    var dir3 := Vector3(direction.x, 0.0, direction.y)
+    var right_dir := Vector3(-direction.y, 0.0, direction.x)
+
+    var stop_dist := road_width * 0.5 + 2.0
+    var side_dist := road_width * 0.5 + 1.0
+
+    return local_intersection - dir3 * stop_dist + right_dir * side_dist
+
+
+func _chunk_seed(chunk: Vector2i) -> int:
+    return hash("%d|%d|%d" % [chunk.x, chunk.y, random_seed])
+
+
+# ----------------------------------
+# Resources
+# ----------------------------------
 
 func _setup_resources() -> void:
     ground_mesh = PlaneMesh.new()
@@ -95,8 +732,17 @@ func _setup_resources() -> void:
     ground_material = StandardMaterial3D.new()
     ground_material.albedo_color = Color(0.22, 0.45, 0.22)
 
+    urban_ground_material = StandardMaterial3D.new()
+    urban_ground_material.albedo_color = Color(0.3, 0.42, 0.28)
+
+    village_ground_material = StandardMaterial3D.new()
+    village_ground_material.albedo_color = Color(0.36, 0.5, 0.28)
+
     road_material = StandardMaterial3D.new()
     road_material.albedo_color = Color(0.13, 0.13, 0.15)
+
+    village_road_material = StandardMaterial3D.new()
+    village_road_material.albedo_color = Color(0.36, 0.29, 0.2)
 
     line_material = StandardMaterial3D.new()
     line_material.albedo_color = Color(0.8, 0.8, 0.2)
@@ -117,7 +763,22 @@ func _setup_resources() -> void:
         mat.albedo_color = c
         building_materials.append(mat)
 
+    var village_palette := [
+        Color(0.55, 0.42, 0.3),
+        Color(0.65, 0.55, 0.4),
+        Color(0.5, 0.38, 0.28),
+        Color(0.7, 0.6, 0.45),
+        Color(0.58, 0.47, 0.35),
+    ]
+
+    for c in village_palette:
+        var mat := StandardMaterial3D.new()
+        mat.albedo_color = c
+        village_materials.append(mat)
+
     _setup_traffic_light_resources()
+    _setup_tree_resources()
+    _setup_village_resources()
 
 
 func _setup_traffic_light_resources() -> void:
@@ -158,250 +819,48 @@ func _setup_traffic_light_resources() -> void:
     }
 
 
-func _update_chunks(force: bool) -> void:
-    if not is_inside_tree():
-        return
+func _setup_tree_resources() -> void:
+    tree_trunk_mesh = CylinderMesh.new()
+    tree_trunk_mesh.top_radius = 0.15
+    tree_trunk_mesh.bottom_radius = 0.2
+    tree_trunk_mesh.height = 1.2
 
-    if spacing <= 0.0:
-        return
+    tree_crown_mesh = SphereMesh.new()
+    tree_crown_mesh.radius = 0.8
+    tree_crown_mesh.height = 1.4
 
-    var center_chunk := Vector2i.ZERO
+    tree_trunk_material = StandardMaterial3D.new()
+    tree_trunk_material.albedo_color = Color(0.35, 0.24, 0.15)
 
-    if is_instance_valid(target):
-        center_chunk = Vector2i(
-            int(floor(target.global_position.x / spacing)),
-            int(floor(target.global_position.z / spacing))
-        )
-    elif not keep_origin_loaded:
-        return
-
-    if initialized and not force and center_chunk == last_center_chunk:
-        return
-
-    last_center_chunk = center_chunk
-    initialized = true
-
-    var needed := {}
-
-    _add_needed_chunks(needed, center_chunk, view_radius)
-
-    if keep_origin_loaded:
-        _add_needed_chunks(needed, Vector2i.ZERO, origin_radius)
-
-    # Создаем недостающие чанки.
-    for c in needed.keys():
-        if not chunks.has(c):
-            var chunk_root := _generate_chunk(c)
-            chunks[c] = chunk_root
-            add_child(chunk_root)
-
-    # Удаляем далекие чанки.
-    var to_erase := []
-
-    for c in chunks.keys():
-        var far_from_target := true
-
-        if is_instance_valid(target):
-            far_from_target = Vector2(float(c.x), float(c.y)).distance_to(
-                Vector2(float(center_chunk.x), float(center_chunk.y))
-            ) > unload_radius
-
-        var far_from_origin := true
-
-        if keep_origin_loaded:
-            far_from_origin = Vector2(float(c.x), float(c.y)).distance_to(
-                Vector2.ZERO
-            ) > float(origin_radius) + 1.0
-
-        if far_from_target and far_from_origin:
-            to_erase.append(c)
-
-    for c in to_erase:
-        var chunk_root = chunks[c]
-        chunks.erase(c)
-
-        if is_instance_valid(chunk_root):
-            chunk_root.queue_free()
+    tree_crown_material = StandardMaterial3D.new()
+    tree_crown_material.albedo_color = Color(0.2, 0.5, 0.22)
 
 
-func _add_needed_chunks(dict: Dictionary, center: Vector2i, radius: int) -> void:
-    for x in range(center.x - radius, center.x + radius + 1):
-        for y in range(center.y - radius, center.y + radius + 1):
-            dict[Vector2i(x, y)] = true
+func _setup_village_resources() -> void:
+    village_roof_mesh = PrismMesh.new()
+    village_roof_mesh.size = Vector3(1.0, 1.0, 1.0)
+
+    village_roof_material = StandardMaterial3D.new()
+    village_roof_material.albedo_color = Color(0.45, 0.2, 0.15)
+
+func get_gas_station(segment: Vector2i):
+    if gas_stations.has(segment):
+        return gas_stations[segment]
+
+    return null
 
 
-func _generate_chunk(chunk: Vector2i) -> Node3D:
-    var root := Node3D.new()
-    root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
-    root.position = Vector3(
-        (chunk.x + 0.5) * spacing,
-        0.0,
-        (chunk.y + 0.5) * spacing
-    )
-
-    var rng := RandomNumberGenerator.new()
-    rng.seed = _chunk_seed(chunk)
-
-    # Крошечный сдвиг высоты нужен, чтобы соседние дороги не z-fighting'ли.
-    var y_offset := float(posmod(chunk.x + chunk.y, 8)) * 0.00025
-
-    _add_mesh(root, ground_mesh, ground_material, Vector3.ZERO)
-
-    # Горизонтальная дорога по нижней границе чанка.
-    _add_mesh(
-        root,
-        road_h_mesh,
-        road_material,
-        Vector3(0.0, 0.01 + y_offset, -spacing * 0.5)
-    )
-
-    # Вертикальная дорога по левой границе чанка.
-    _add_mesh(
-        root,
-        road_v_mesh,
-        road_material,
-        Vector3(-spacing * 0.5, 0.02 + y_offset, 0.0)
-    )
-
-    if lane_markings:
-        _add_mesh(
-            root,
-            line_h_mesh,
-            line_material,
-            Vector3(0.0, 0.03 + y_offset, -spacing * 0.5)
-        )
-
-        _add_mesh(
-            root,
-            line_v_mesh,
-            line_material,
-            Vector3(-spacing * 0.5, 0.04 + y_offset, 0.0)
-        )
-
-    if traffic_lights:
-        _create_traffic_lights(root, chunk)
-
-    _generate_buildings(root, rng)
-
-    return root
-
-
-func _create_traffic_lights(root: Node3D, chunk: Vector2i) -> void:
-    var intersection := Vector2i(chunk.x, chunk.y)
-
-    var directions := [
-        Vector2i(1, 0),
-        Vector2i(-1, 0),
-        Vector2i(0, 1),
-        Vector2i(0, -1)
-    ]
-
-    for d in directions:
-        var light := TrafficLight.new()
-        light.setup(intersection, d, light_meshes, light_materials)
-        light.position = _traffic_light_local_position(d)
-        root.add_child(light)
-
-
-func _traffic_light_local_position(direction: Vector2i) -> Vector3:
-    var local_intersection := Vector3(-spacing * 0.5, 0.0, -spacing * 0.5)
-
-    var dir3 := Vector3(direction.x, 0.0, direction.y)
-    var right_dir := Vector3(-direction.y, 0.0, direction.x)
-
-    var stop_dist := road_width * 0.5 + 2.0
-    var side_dist := road_width * 0.5 + 1.0
-
-    return local_intersection - dir3 * stop_dist + right_dir * side_dist
-
-
-func _generate_buildings(parent: Node3D, rng: RandomNumberGenerator) -> void:
-    var inner_half := spacing * 0.5 - road_width * 0.5 - building_margin
-    var inner_size := inner_half * 2.0
-
-    if inner_size < 8.0:
-        return
-
-    # Делим квартал на 2x2 участка.
-    var lot_size := inner_size / 2.0
-
-    for lx in 2:
-        for lz in 2:
-            # Шанс, что участка не будет здания.
-            if rng.randf() > 0.78:
-                continue
-
-            var lot_center := Vector3(
-                -inner_half + lot_size * (lx + 0.5),
-                0.0,
-                -inner_half + lot_size * (lz + 0.5)
-            )
-
-            var w := rng.randf_range(lot_size * 0.55, lot_size * 0.92)
-            var d := rng.randf_range(lot_size * 0.55, lot_size * 0.92)
-            var h := rng.randf_range(building_min_height, building_max_height)
-
-            var jitter_x := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - w) * 0.25)
-            var jitter_z := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - d) * 0.25)
-
-            _add_building(
-                parent,
-                lot_center + Vector3(jitter_x, 0.0, jitter_z),
-                w,
-                h,
-                d,
-                rng
-            )
-
-
-func _add_building(
-    parent: Node3D,
-    local_position: Vector3,
-    w: float,
-    h: float,
-    d: float,
+func _generate_gas_station(
+    root: Node3D,
+    chunk: Vector2i,
     rng: RandomNumberGenerator
 ) -> void:
-    var body := StaticBody3D.new()
-    body.position = local_position
-    body.collision_mask = 0
+    var key := Vector2i(chunk.x, chunk.y)
 
-    var mesh := MeshInstance3D.new()
-    var box := BoxMesh.new()
-    box.size = Vector3(w, h, d)
+    var station := GasStation.new()
+    station.setup(key, spacing, road_width, rng)
 
-    mesh.mesh = box
-    mesh.position = Vector3(0.0, h * 0.5, 0.0)
-    mesh.material_override = building_materials[rng.randi_range(0, building_materials.size() - 1)]
+    root.add_child(station)
+    root.set_meta("gas_station_key", key)
 
-    var col := CollisionShape3D.new()
-    var shape := BoxShape3D.new()
-    shape.size = Vector3(w, h, d)
-
-    col.shape = shape
-    col.position = Vector3(0.0, h * 0.5, 0.0)
-
-    body.add_child(mesh)
-    body.add_child(col)
-
-    parent.add_child(body)
-
-
-func _add_mesh(
-    parent: Node3D,
-    mesh: Mesh,
-    material: Material,
-    local_position: Vector3
-) -> MeshInstance3D:
-    var mi := MeshInstance3D.new()
-    mi.mesh = mesh
-    mi.material_override = material
-    mi.position = local_position
-
-    parent.add_child(mi)
-
-    return mi
-
-
-func _chunk_seed(chunk: Vector2i) -> int:
-    return hash("%d|%d|%d" % [chunk.x, chunk.y, random_seed])
+    gas_stations[key] = station

@@ -91,7 +91,7 @@ func _physics_process(delta: float) -> void:
                 _choose_action_at_corner()
                 return
 
-            if TrafficRules.are_all_red(crossing_intersection):
+            if _crossing_signal_allows():
                 red_delay += delta
 
                 if red_delay >= red_delay_time:
@@ -162,6 +162,9 @@ func _try_prepare_crossing() -> bool:
         var target_block: Vector2i = opt["target_block"]
         var target_corner_value: int = opt["target_corner"]
 
+        if not _is_crossing_road_available(target_block):
+            continue
+
         if city.chunks.has(target_block):
             crossing_intersection = _corner_intersection(current_block, current_corner)
             crossing_target_block = target_block
@@ -173,6 +176,28 @@ func _try_prepare_crossing() -> bool:
             red_delay = 0.0
 
             return true
+
+    return false
+
+func _is_crossing_road_available(target_block: Vector2i) -> bool:
+    if city == null:
+        return true
+
+    # Переход вверх.
+    if target_block.y == current_block.y - 1:
+        return city.has_horizontal_road(current_block.x, current_block.y)
+
+    # Переход вниз.
+    if target_block.y == current_block.y + 1:
+        return city.has_horizontal_road(current_block.x, current_block.y + 1)
+
+    # Переход влево.
+    if target_block.x == current_block.x - 1:
+        return city.has_vertical_road(current_block.x, current_block.y)
+
+    # Переход вправо.
+    if target_block.x == current_block.x + 1:
+        return city.has_vertical_road(current_block.x + 1, current_block.y)
 
     return false
 
@@ -270,3 +295,10 @@ func _corner_point(block: Vector2i, corner: int) -> Vector3:
 
 func _walk_half() -> float:
     return maxf(2.0, spacing * 0.5 - road_width * 0.5 - 1.5)
+
+func _crossing_signal_allows() -> bool:
+    if is_instance_valid(city) and city.has_method("has_traffic_lights_at"):
+        if not city.has_traffic_lights_at(crossing_intersection):
+            return true
+
+    return TrafficRules.are_all_red(crossing_intersection)

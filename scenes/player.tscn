@@ -1,72 +1,78 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://d2y2psj46srdv"]
 
-[ext_resource type="Script" path="res://scripts/player_car.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://d0exshgteed50" path="res://scripts/player_car.gd" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://bsv1xaqwyuod" path="res://assets/test/scene.gltf" id="2_g2els"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_player"]
 size = Vector3(2, 1, 4.2)
 
+[sub_resource type="StandardMaterial3D" id="Material_body"]
+albedo_color = Color(0.85, 0.2, 0.2, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_body"]
 size = Vector3(2, 0.8, 4.2)
 
-[sub_resource type="StandardMaterial3D" id="Material_body"]
-albedo_color = Color(0.85, 0.2, 0.2, 1)
+[sub_resource type="StandardMaterial3D" id="Material_cabin"]
+albedo_color = Color(0.15, 0.15, 0.2, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_cabin"]
 size = Vector3(1.6, 0.6, 1.8)
 
-[sub_resource type="StandardMaterial3D" id="Material_cabin"]
-albedo_color = Color(0.15, 0.15, 0.2, 1)
+[sub_resource type="StandardMaterial3D" id="Material_wheel"]
+albedo_color = Color(0.08, 0.08, 0.08, 1)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
 top_radius = 0.4
 bottom_radius = 0.4
 height = 0.3
 
-[sub_resource type="StandardMaterial3D" id="Material_wheel"]
-albedo_color = Color(0.08, 0.08, 0.08, 1)
-
-[node name="Player" type="CharacterBody3D"]
+[node name="Player" type="CharacterBody3D" unique_id=1448336791]
 motion_mode = 1
 script = ExtResource("1_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=514972638]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_player")
 
-[node name="Body" type="MeshInstance3D" parent="."]
+[node name="Body" type="MeshInstance3D" parent="." unique_id=1887408855]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-mesh = SubResource("BoxMesh_body")
+visible = false
 material_override = SubResource("Material_body")
+mesh = SubResource("BoxMesh_body")
 
-[node name="Cabin" type="MeshInstance3D" parent="Body"]
+[node name="Cabin" type="MeshInstance3D" parent="Body" unique_id=362244647]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.2)
-mesh = SubResource("BoxMesh_cabin")
 material_override = SubResource("Material_cabin")
+mesh = SubResource("BoxMesh_cabin")
 
-[node name="Wheels" type="Node3D" parent="."]
+[node name="Wheels" type="Node3D" parent="." unique_id=1780866444]
+visible = false
 
-[node name="WheelFL" type="MeshInstance3D" parent="Wheels"]
+[node name="WheelFL" type="MeshInstance3D" parent="Wheels" unique_id=715274950]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.95, 0.4, -1.35)
-mesh = SubResource("CylinderMesh_wheel")
 material_override = SubResource("Material_wheel")
+mesh = SubResource("CylinderMesh_wheel")
 
-[node name="WheelFR" type="MeshInstance3D" parent="Wheels"]
+[node name="WheelFR" type="MeshInstance3D" parent="Wheels" unique_id=1024905008]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.95, 0.4, -1.35)
-mesh = SubResource("CylinderMesh_wheel")
 material_override = SubResource("Material_wheel")
+mesh = SubResource("CylinderMesh_wheel")
 
-[node name="WheelRL" type="MeshInstance3D" parent="Wheels"]
+[node name="WheelRL" type="MeshInstance3D" parent="Wheels" unique_id=910439257]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.95, 0.4, 1.35)
-mesh = SubResource("CylinderMesh_wheel")
 material_override = SubResource("Material_wheel")
+mesh = SubResource("CylinderMesh_wheel")
 
-[node name="WheelRR" type="MeshInstance3D" parent="Wheels"]
+[node name="WheelRR" type="MeshInstance3D" parent="Wheels" unique_id=1645025797]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.95, 0.4, 1.35)
-mesh = SubResource("CylinderMesh_wheel")
 material_override = SubResource("Material_wheel")
+mesh = SubResource("CylinderMesh_wheel")
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=597469243]
 transform = Transform3D(1, 0, 0, 0, 0.961262, 0.275637, 0, -0.275637, 0.961262, 0, 4.2, 8.5)
 current = true
 near = 0.1
 far = 800.0
+
+[node name="Sketchfab_Scene" parent="." unique_id=1702566913 instance=ExtResource("2_g2els")]
+transform = Transform3D(-80, 0, -6.9938224e-06, 0, 80, 0, 6.9938224e-06, 0, -80, 0, 0, 0)

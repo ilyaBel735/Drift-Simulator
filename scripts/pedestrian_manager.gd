@@ -99,6 +99,10 @@ func _try_spawn_one() -> void:
 
 	for attempt in 40:
 		var block := _random_block_near_player(spacing)
+
+		if not city.is_pedestrian_chunk(block):
+			continue
+		
 		var corner := randi_range(0, 3)
 		var pos := _corner_point(block, corner, spacing, city.road_width)
 
