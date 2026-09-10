@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Drift Simulator 2"
-run/main_scene="res://main.tscn"
+run/main_scene="uid://baf2q16r3lthy"
 config/features=PackedStringArray("4.8", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 <<<<<<<HEADconfig/name="Drift Simulator 2"

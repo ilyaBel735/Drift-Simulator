@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dry2oh8qiefbx"]
+
+[ext_resource type="Script" uid="uid://bi82svg3osi4j" path="res://scripts/plane_piece.gd" id="1_plane"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_r"]
+albedo_color = Color(0.40653077, 0.4065785, 0.0877387, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_r"]
+
+[node name="RoadCity" type="MeshInstance3D" unique_id=848562390]
+material_override = SubResource("Mat_r")
+mesh = SubResource("PlaneMesh_r")
+script = ExtResource("1_plane")

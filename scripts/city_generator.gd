@@ -5,10 +5,23 @@ enum Biome { NATURE, VILLAGE, CITY }
 
 const TreeScene = preload("res://scenes/tree.tscn")
 const GasStationScene = preload("res://scenes/gas_station.tscn")
+const BuildingScene = preload("res://scenes/building.tscn")
+const VillageHouseScene = preload("res://scenes/village_house.tscn")
+const GrassPatchScene = preload("res://scenes/grass_patch.tscn")
+const GroundNatureScene = preload("res://scenes/ground_nature.tscn")
+const GroundCityScene = preload("res://scenes/ground_city.tscn")
+const GroundVillageScene = preload("res://scenes/ground_village.tscn")
+const RoadCityScene = preload("res://scenes/road_city.tscn")
+const RoadVillageScene = preload("res://scenes/road_village.tscn")
+const RoadLineScene = preload("res://scenes/road_line.tscn")
 
 @export var tree_density := 0.15
 @export var gas_station_chance := 0.08
 @export var parking_chance := 0.12
+
+# Количество кустиков травы на чанк (рисуются одним MultiMesh — дёшево).
+@export var grass_nature_count := 90
+@export var grass_village_count := 40
 
 @export var spacing := 48.0
 @export var road_width := 12.0
@@ -33,16 +46,12 @@ const GasStationScene = preload("res://scenes/gas_station.tscn")
 @export var village_frequency := 0.022
 
 # Циклические биомы: ГОРОД -> ЛЕС -> ДЕРЕВНЯ -> ЛЕС -> ...
-# Ширина одного биома в чанках.
 @export var biome_size := 20
-# Множители ширины биомов.
 @export var city_width := 1.0
 @export var forest_width := 1.0
 @export var village_width := 1.0
-# Волнистость границ биомов.
 @export var edge_frequency := 0.06
 @export var edge_noise_amount := 0.35
-# Сдвиг фазы цикла.
 @export var cycle_offset := 1.35
 
 # Пороги.
@@ -80,27 +89,28 @@ var detail_noise := FastNoiseLite.new()
 var village_noise := FastNoiseLite.new()
 var edge_noise := FastNoiseLite.new()
 
-var ground_mesh: PlaneMesh
-var road_h_mesh: PlaneMesh
-var road_v_mesh: PlaneMesh
-var line_h_mesh: PlaneMesh
-var line_v_mesh: PlaneMesh
-
-var ground_material: StandardMaterial3D
-var urban_ground_material: StandardMaterial3D
-var village_ground_material: StandardMaterial3D
-var road_material: StandardMaterial3D
-var village_road_material: StandardMaterial3D
-var line_material: StandardMaterial3D
-
-var building_materials := []
-var village_materials := []
-
 var light_meshes := {}
 var light_materials := {}
 
-var village_roof_mesh: PrismMesh
-var village_roof_material: StandardMaterial3D
+# Оттенки зданий/домов. Когда добавишь текстуры — будут работать как вариации цвета.
+var building_colors := [
+	Color(0.62, 0.55, 0.48),
+	Color(0.52, 0.58, 0.66),
+	Color(0.68, 0.64, 0.58),
+	Color(0.46, 0.50, 0.56),
+	Color(0.72, 0.58, 0.52),
+	Color(0.55, 0.68, 0.60),
+	Color(0.60, 0.52, 0.62),
+	Color(0.50, 0.50, 0.50),
+]
+
+var village_colors := [
+	Color(0.55, 0.42, 0.3),
+	Color(0.65, 0.55, 0.4),
+	Color(0.5, 0.38, 0.28),
+	Color(0.7, 0.6, 0.45),
+	Color(0.58, 0.47, 0.35),
+]
 
 func _ready() -> void:
 	if random_seed == 0:
@@ -109,7 +119,7 @@ func _ready() -> void:
 	if noise_seed == 0:
 		noise_seed = randi()
 	_setup_noise()
-	_setup_resources()
+	_setup_traffic_light_resources()
 	_update_chunks(true)
 
 func set_target(node: Node3D) -> void:
@@ -201,7 +211,7 @@ func _is_guaranteed_h(ix: int, iz: int) -> bool:
 func _is_guaranteed_v(ix: int, iz: int) -> bool:
 	if guaranteed_radius < 0:
 		return false
-	return abs(iz) <= guaranteed_radius and (
+	return abs(ix) <= guaranteed_radius and (
 		abs(iz) <= guaranteed_radius or abs(iz + 1) <= guaranteed_radius
 	)
 
@@ -225,7 +235,7 @@ func has_vertical_road(ix: int, iz: int) -> bool:
 	var n := road_noise.get_noise_2d(ix, iz + 0.5)
 	return n > _road_threshold_for(Vector2i(ix, iz))
 
-# В городе дороги плотные, в деревне реже, в лесу — только магистрали.
+# В городе дороги плотные, в деревне реже, в лесу — в основном магистрали.
 func _road_threshold_for(chunk: Vector2i) -> float:
 	match get_biome(chunk):
 		Biome.VILLAGE:
@@ -363,55 +373,58 @@ func _generate_chunk(chunk: Vector2i) -> Node3D:
 	if guaranteed:
 		density = maxf(density, 0.4)
 
-	var ground_mat: Material = ground_material
+	# --- Пол ---
+	var ground_scene: PackedScene = GroundNatureScene
 	if biome == Biome.CITY:
-		ground_mat = urban_ground_material
+		ground_scene = GroundCityScene
 	elif biome == Biome.VILLAGE:
-		ground_mat = village_ground_material
+		ground_scene = GroundVillageScene
 
-	var road_mat: Material = road_material
-	if biome == Biome.VILLAGE:
-		road_mat = village_road_material
+	var ground := ground_scene.instantiate() as PlanePiece
+	ground.setup_size(Vector2(spacing, spacing))
+	ground.position = Vector3.ZERO
+	root.add_child(ground)
 
-	_add_mesh(root, ground_mesh, ground_mat, Vector3.ZERO)
-
+	# Крошечный сдвиг высоты, чтобы соседние дороги не z-fighting'или.
 	var y_offset := float(posmod(chunk.x + chunk.y, 8)) * 0.00025
 
 	var h_road := has_horizontal_road(chunk.x, chunk.y)
 	var v_road := has_vertical_road(chunk.x, chunk.y)
 
+	# --- Дороги ---
+	var road_scene: PackedScene = RoadCityScene
+	if biome == Biome.VILLAGE:
+		road_scene = RoadVillageScene
+
 	if h_road:
-		_add_mesh(
-			root,
-			road_h_mesh,
-			road_mat,
-			Vector3(0.0, 0.01 + y_offset, -spacing * 0.5)
-		)
+		var rh := road_scene.instantiate() as PlanePiece
+		rh.setup_size(Vector2(spacing + road_width, road_width))
+		rh.position = Vector3(0.0, 0.01 + y_offset, -spacing * 0.5)
+		root.add_child(rh)
+
 		if lane_markings and biome == Biome.CITY:
-			_add_mesh(
-				root,
-				line_h_mesh,
-				line_material,
-				Vector3(0.0, 0.03 + y_offset, -spacing * 0.5)
-			)
+			var lh := RoadLineScene.instantiate() as PlanePiece
+			lh.setup_size(Vector2(spacing + road_width, 0.25))
+			lh.position = Vector3(0.0, 0.03 + y_offset, -spacing * 0.5)
+			root.add_child(lh)
 
 	if v_road:
-		_add_mesh(
-			root,
-			road_v_mesh,
-			road_mat,
-			Vector3(-spacing * 0.5, 0.02 + y_offset, 0.0)
-		)
+		var rv := road_scene.instantiate() as PlanePiece
+		rv.setup_size(Vector2(road_width, spacing + road_width))
+		rv.position = Vector3(-spacing * 0.5, 0.02 + y_offset, 0.0)
+		root.add_child(rv)
+
 		if lane_markings and biome == Biome.CITY:
-			_add_mesh(
-				root,
-				line_v_mesh,
-				line_material,
-				Vector3(-spacing * 0.5, 0.04 + y_offset, 0.0)
-			)
+			var lv := RoadLineScene.instantiate() as PlanePiece
+			lv.setup_size(Vector2(0.25, spacing + road_width))
+			lv.position = Vector3(-spacing * 0.5, 0.04 + y_offset, 0.0)
+			root.add_child(lv)
 
 	if traffic_lights and has_traffic_lights_at(Vector2i(chunk.x, chunk.y)):
 		_create_traffic_lights(root, chunk)
+
+	if biome == Biome.NATURE or biome == Biome.VILLAGE:
+		_generate_grass(root, rng, biome, chunk)
 
 	var special := false
 
@@ -496,6 +509,34 @@ func _generate_nature(parent: Node3D, rng: RandomNumberGenerator, chunk: Vector2
 		var pos := _random_nature_local(rng)
 		_add_tree(parent, pos, rng)
 
+func _generate_grass(root: Node3D, rng: RandomNumberGenerator, biome: int, chunk: Vector2i) -> void:
+	var count := grass_nature_count if biome == Biome.NATURE else grass_village_count
+	if count <= 0:
+		return
+
+	var bmin := Vector2(-spacing * 0.5 + 1.0, -spacing * 0.5 + 1.0)
+	var bmax := Vector2(spacing * 0.5 - 1.0, spacing * 0.5 - 1.0)
+
+	# Нижняя дорога (своя) и верхняя (соседнего чанка).
+	if has_horizontal_road(chunk.x, chunk.y):
+		bmin.y = -spacing * 0.5 + road_width * 0.5 + 0.6
+	if has_horizontal_road(chunk.x, chunk.y + 1):
+		bmax.y = spacing * 0.5 - road_width * 0.5 - 0.6
+
+	# Левая дорога (своя) и правая (соседнего чанка).
+	if has_vertical_road(chunk.x, chunk.y):
+		bmin.x = -spacing * 0.5 + road_width * 0.5 + 0.6
+	if has_vertical_road(chunk.x + 1, chunk.y):
+		bmax.x = spacing * 0.5 - road_width * 0.5 - 0.6
+
+	# Если дороги "съели" всю площадь чанка — траву не сыпем.
+	if bmin.x >= bmax.x or bmin.y >= bmax.y:
+		return
+
+	var patch := GrassPatchScene.instantiate() as GrassPatch
+	patch.generate(rng, count, bmin, bmax)
+	root.add_child(patch)
+
 func _random_nature_local(rng: RandomNumberGenerator) -> Vector3:
 	var inner := maxf(4.0, spacing * 0.5 - road_width * 0.5 - building_margin)
 	return Vector3(
@@ -513,23 +554,13 @@ func _add_building(
 	rng: RandomNumberGenerator,
 	chunk: Vector2i
 ) -> void:
-	var body := StaticBody3D.new()
-	body.position = local_position
-	body.collision_mask = 0
-	var mesh := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(w, h, d)
-	mesh.mesh = box
-	mesh.position = Vector3(0.0, h * 0.5, 0.0)
-	mesh.material_override = building_materials[rng.randi_range(0, building_materials.size() - 1)]
-	var col := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(w, h, d)
-	col.shape = shape
-	col.position = Vector3(0.0, h * 0.5, 0.0)
-	body.add_child(mesh)
-	body.add_child(col)
-	parent.add_child(body)
+	var building := BuildingScene.instantiate() as Building
+	building.setup(
+		Vector3(w, h, d),
+		building_colors[rng.randi_range(0, building_colors.size() - 1)]
+	)
+	building.position = local_position
+	parent.add_child(building)
 	_register_door(chunk, parent.position + _door_point(local_position, w, d))
 
 func _add_village_house(
@@ -541,30 +572,13 @@ func _add_village_house(
 	rng: RandomNumberGenerator,
 	chunk: Vector2i
 ) -> void:
-	var body := StaticBody3D.new()
-	body.position = local_position
-	body.collision_mask = 0
-	var mesh := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(w, h, d)
-	mesh.mesh = box
-	mesh.position = Vector3(0.0, h * 0.5, 0.0)
-	mesh.material_override = village_materials[rng.randi_range(0, village_materials.size() - 1)]
-	var col := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(w, h, d)
-	col.shape = shape
-	col.position = Vector3(0.0, h * 0.5, 0.0)
-	var roof := MeshInstance3D.new()
-	roof.mesh = village_roof_mesh
-	roof.material_override = village_roof_material
-	var roof_height := minf(2.0, maxf(0.8, minf(w, d) * 0.35))
-	roof.scale = Vector3(w * 1.15, roof_height, d * 1.15)
-	roof.position = Vector3(0.0, h + roof_height * 0.5, 0.0)
-	body.add_child(mesh)
-	body.add_child(col)
-	body.add_child(roof)
-	parent.add_child(body)
+	var house := VillageHouseScene.instantiate() as VillageHouse
+	house.setup(
+		Vector3(w, h, d),
+		village_colors[rng.randi_range(0, village_colors.size() - 1)]
+	)
+	house.position = local_position
+	parent.add_child(house)
 	_register_door(chunk, parent.position + _door_point(local_position, w, d))
 
 func _add_tree(parent: Node3D, local_position: Vector3, rng: RandomNumberGenerator) -> void:
@@ -574,19 +588,6 @@ func _add_tree(parent: Node3D, local_position: Vector3, rng: RandomNumberGenerat
 	var s := rng.randf_range(0.7, 1.3)
 	crown.scale = Vector3(s, s, s)
 	parent.add_child(tree)
-
-func _add_mesh(
-	parent: Node3D,
-	mesh: Mesh,
-	material: Material,
-	local_position: Vector3
-) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = material
-	mi.position = local_position
-	parent.add_child(mi)
-	return mi
 
 func _create_traffic_lights(root: Node3D, chunk: Vector2i) -> void:
 	var intersection := Vector2i(chunk.x, chunk.y)
@@ -688,7 +689,6 @@ func _generate_parking(root: Node3D, chunk: Vector2i, rng: RandomNumberGenerator
 			car.position = local
 			car.rotation_degrees.y = rng.randf_range(-6.0, 6.0)
 			root.add_child(car)
-			# Точка, где "выходит" пешеход.
 			var spot := root.position + local + Vector3(1.3, 0.0, -sign(z) * 1.4)
 			parking_spots[chunk].append(spot)
 
@@ -752,70 +752,6 @@ func _generate_gas_station(
 # Resources
 # ----------------------------------
 
-func _setup_resources() -> void:
-	ground_mesh = PlaneMesh.new()
-	ground_mesh.size = Vector2(spacing, spacing)
-
-	road_h_mesh = PlaneMesh.new()
-	road_h_mesh.size = Vector2(spacing + road_width, road_width)
-
-	road_v_mesh = PlaneMesh.new()
-	road_v_mesh.size = Vector2(road_width, spacing + road_width)
-
-	line_h_mesh = PlaneMesh.new()
-	line_h_mesh.size = Vector2(spacing + road_width, 0.25)
-
-	line_v_mesh = PlaneMesh.new()
-	line_v_mesh.size = Vector2(0.25, spacing + road_width)
-
-	ground_material = StandardMaterial3D.new()
-	ground_material.albedo_color = Color(0.22, 0.45, 0.22)
-
-	urban_ground_material = StandardMaterial3D.new()
-	urban_ground_material.albedo_color = Color(0.3, 0.42, 0.28)
-
-	village_ground_material = StandardMaterial3D.new()
-	village_ground_material.albedo_color = Color(0.36, 0.5, 0.28)
-
-	road_material = StandardMaterial3D.new()
-	road_material.albedo_color = Color(0.13, 0.13, 0.15)
-
-	village_road_material = StandardMaterial3D.new()
-	village_road_material.albedo_color = Color(0.36, 0.29, 0.2)
-
-	line_material = StandardMaterial3D.new()
-	line_material.albedo_color = Color(0.8, 0.8, 0.2)
-
-	var palette := [
-		Color(0.62, 0.55, 0.48),
-		Color(0.52, 0.58, 0.66),
-		Color(0.68, 0.64, 0.58),
-		Color(0.46, 0.50, 0.56),
-		Color(0.72, 0.58, 0.52),
-		Color(0.55, 0.68, 0.60),
-		Color(0.60, 0.52, 0.62),
-		Color(0.50, 0.50, 0.50),
-	]
-	for c in palette:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = c
-		building_materials.append(mat)
-
-	var village_palette := [
-		Color(0.55, 0.42, 0.3),
-		Color(0.65, 0.55, 0.4),
-		Color(0.5, 0.38, 0.28),
-		Color(0.7, 0.6, 0.45),
-		Color(0.58, 0.47, 0.35),
-	]
-	for c in village_palette:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = c
-		village_materials.append(mat)
-
-	_setup_traffic_light_resources()
-	_setup_village_resources()
-
 func _setup_traffic_light_resources() -> void:
 	var pole_mesh := BoxMesh.new()
 	pole_mesh.size = Vector3(0.18, 3.0, 0.18)
@@ -845,9 +781,3 @@ func _setup_traffic_light_resources() -> void:
 		"yellow": yellow_mat,
 		"green": green_mat,
 	}
-
-func _setup_village_resources() -> void:
-	village_roof_mesh = PrismMesh.new()
-	village_roof_mesh.size = Vector3(1.0, 1.0, 1.0)
-	village_roof_material = StandardMaterial3D.new()
-	village_roof_material.albedo_color = Color(0.45, 0.2, 0.15)

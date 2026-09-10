@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/village_house.gd" id="1_h"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_h"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(1, 1, 1, 1)
+
+[sub_resource type="PrismMesh" id="Prism_roof"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_roof"]
+albedo_color = Color(0.45, 0.2, 0.15, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_h"]
+
+[node name="VillageHouse" type="StaticBody3D"]
+collision_mask = 0
+script = ExtResource("1_h")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_wall")
+mesh = SubResource("BoxMesh_h")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_roof")
+mesh = SubResource("Prism_roof")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_h")

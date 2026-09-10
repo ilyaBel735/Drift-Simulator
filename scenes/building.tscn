@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/building.gd" id="1_b"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_b"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_b"]
+albedo_color = Color(1, 1, 1, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_b"]
+
+[node name="Building" type="StaticBody3D"]
+collision_mask = 0
+script = ExtResource("1_b")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_b")
+mesh = SubResource("BoxMesh_b")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_b")

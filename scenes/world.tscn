@@ -6,11 +6,33 @@
 [ext_resource type="Script" uid="uid://2ccsdcg27h5b" path="res://scripts/pedestrian_manager.gd" id="4_ped_manager"]
 [ext_resource type="PackedScene" path="res://scenes/pedestrian.tscn" id="5_pedestrian"]
 
+[sub_resource type="Gradient" id="Gradient_w7kh3"]
+offsets = PackedFloat32Array(0.33435583, 0.702454)
+colors = PackedColorArray(0.20308483, 0.32181853, 0.61716574, 1, 0.87070966, 0.8707098, 0.87070966, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_7r4gi"]
+noise_type = 2
+seed = 3
+frequency = 0.03
+domain_warp_type = 1
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_4mrxx"]
+noise = SubResource("FastNoiseLite_7r4gi")
+color_ramp = SubResource("Gradient_w7kh3")
+seamless = true
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_i7141"]
+panorama = SubResource("NoiseTexture2D_4mrxx")
+
+[sub_resource type="Sky" id="Sky_71j4m"]
+sky_material = SubResource("PanoramaSkyMaterial_i7141")
+
 [sub_resource type="Environment" id="Environment_world"]
-background_mode = 1
-background_color = Color(0.55, 0.7, 0.95, 1)
+background_mode = 2
+background_color = Color(0.47665244, 0.65151817, 0.93536776, 1)
+sky = SubResource("Sky_71j4m")
 ambient_light_source = 2
-ambient_light_color = Color(0.85, 0.85, 0.9, 1)
+ambient_light_color = Color(0.6598114, 0.48238266, 0.087506585, 1)
 ambient_light_energy = 1.2
 
 [node name="World" type="Node3D" unique_id=624245230]
@@ -19,7 +41,7 @@ ambient_light_energy = 1.2
 environment = SubResource("Environment_world")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=585044403]
-transform = Transform3D(0.86602527, 0.38302252, -0.32139382, 0, 0.64278734, 0.7660447, 0.50000024, -0.66341406, 0.55667007, 0, 0, 0)
+transform = Transform3D(0.86602515, 0.3830225, -0.32139376, -0.11852877, 0.7817322, 0.6122463, 0.485748, -0.49212635, 0.722399, 0, 0, 0)
 shadow_enabled = true
 
 [node name="CityGenerator" type="Node3D" parent="." unique_id=244264637]
@@ -30,7 +52,9 @@ noise_seed = 2026
 script = ExtResource("2_manager")
 bot_scene = ExtResource("3_traffic_bot")
 max_bots = 24
+spawn_radius_chunks = 3
 
 [node name="PedestrianManager" type="Node3D" parent="." unique_id=761397065]
 script = ExtResource("4_ped_manager")
 pedestrian_scene = ExtResource("5_pedestrian")
+spawn_radius_chunks = 3

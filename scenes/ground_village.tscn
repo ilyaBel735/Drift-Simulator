@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://dj5hsgmm1lqq0"]
+
+[ext_resource type="Texture2D" uid="uid://djqgmbj7jogtf" path="res://assets/textures/grass-1.jpg" id="1_3widf"]
+[ext_resource type="Script" uid="uid://bi82svg3osi4j" path="res://scripts/plane_piece.gd" id="1_plane"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_g"]
+albedo_color = Color(0.7548252, 0.7548252, 0.7548251, 1)
+albedo_texture = ExtResource("1_3widf")
+uv1_scale = Vector3(6, 6, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_g"]
+
+[node name="GroundNature" type="MeshInstance3D" unique_id=312512618]
+material_override = SubResource("Mat_g")
+mesh = SubResource("PlaneMesh_g")
+script = ExtResource("1_plane")

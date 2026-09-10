@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://dp3wi0n2225nn"]
+
+[ext_resource type="Texture2D" uid="uid://2oq82pxghl36" path="res://assets/textures/ground-1.jpg" id="1_4023i"]
+[ext_resource type="Script" uid="uid://bi82svg3osi4j" path="res://scripts/plane_piece.gd" id="1_plane"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_r"]
+albedo_color = Color(0.82606, 0.82606006, 0.82606, 1)
+albedo_texture = ExtResource("1_4023i")
+uv1_scale = Vector3(8, 2, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_r"]
+
+[node name="RoadCity" type="MeshInstance3D" unique_id=1180242038]
+material_override = SubResource("Mat_r")
+mesh = SubResource("PlaneMesh_r")
+script = ExtResource("1_plane")

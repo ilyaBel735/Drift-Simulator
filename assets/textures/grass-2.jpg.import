@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://4yf5vfa1tj6"
-path.s3tc="res://.godot/imported/artificial-green-grass-close-up.jpg-ead10bcab14a30697d17280cc6f9de71.s3tc.ctex"
+uid="uid://6tjo1fuy2f6q"
+path.s3tc="res://.godot/imported/grass-2.jpg-5847d170548ec9e30b29814b154e4383.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,13 +11,14 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/artificial-green-grass-close-up.jpg"
-dest_files=["res://.godot/imported/artificial-green-grass-close-up.jpg-ead10bcab14a30697d17280cc6f9de71.s3tc.ctex"]
+source_file="res://assets/textures/grass-2.jpg"
+dest_files=["res://.godot/imported/grass-2.jpg-5847d170548ec9e30b29814b154e4383.s3tc.ctex"]
 
 [params]
 
 compress/mode=2
 compress/high_quality=false
+compress/high_quality_mode=0
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
