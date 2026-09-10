@@ -1,21 +1,28 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://bfnabruxq18qe"]
 
-[ext_resource type="Script" path="res://scripts/building.gd" id="1_b"]
+[ext_resource type="Script" uid="uid://c03dbob3v8p0o" path="res://scripts/building.gd" id="1_b"]
+[ext_resource type="Texture2D" uid="uid://sa86b5vit4c4" path="res://assets/textures/modern-business-building-sunset-evening.jpg" id="2_uvy8r"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v5i7j"]
+albedo_color = Color(0.8603689, 0.8603693, 0.86036897, 1)
+albedo_texture = ExtResource("2_uvy8r")
+uv1_scale = Vector3(2, 2, 2)
+uv1_offset = Vector3(0, 0.5, 0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_b"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_b"]
 
-[sub_resource type="StandardMaterial3D" id="Mat_b"]
-albedo_color = Color(1, 1, 1, 1)
-
 [sub_resource type="BoxShape3D" id="Shape_b"]
 
-[node name="Building" type="StaticBody3D"]
+[node name="Building" type="StaticBody3D" unique_id=88535142]
 collision_mask = 0
 script = ExtResource("1_b")
+base_material = SubResource("StandardMaterial3D_v5i7j")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1216825508]
 material_override = SubResource("Mat_b")
 mesh = SubResource("BoxMesh_b")
 
-[node name="Collision" type="CollisionShape3D" parent="."]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1776047237]
 shape = SubResource("Shape_b")

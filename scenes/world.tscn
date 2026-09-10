@@ -32,8 +32,7 @@ background_mode = 2
 background_color = Color(0.47665244, 0.65151817, 0.93536776, 1)
 sky = SubResource("Sky_71j4m")
 ambient_light_source = 2
-ambient_light_color = Color(0.6598114, 0.48238266, 0.087506585, 1)
-ambient_light_energy = 1.2
+ambient_light_color = Color(0.7592122, 0.5579821, 0.10659725, 1)
 
 [node name="World" type="Node3D" unique_id=624245230]
 
@@ -41,7 +40,7 @@ ambient_light_energy = 1.2
 environment = SubResource("Environment_world")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=585044403]
-transform = Transform3D(0.86602515, 0.3830225, -0.32139376, -0.11852877, 0.7817322, 0.6122463, 0.485748, -0.49212635, 0.722399, 0, 0, 0)
+transform = Transform3D(-0.5148921, -0.516679, 0.6840534, 0.18601713, 0.7116056, 0.67750645, -0.83682954, 0.47608823, -0.270289, 0, 0, 0)
 shadow_enabled = true
 
 [node name="CityGenerator" type="Node3D" parent="." unique_id=244264637]

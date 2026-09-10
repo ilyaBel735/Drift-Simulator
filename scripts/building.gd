@@ -19,7 +19,7 @@ func setup(size: Vector3, tint: Color) -> void:
 		mat = mesh_node.material_override as StandardMaterial3D
 	if mat != null:
 		mat = mat.duplicate() as StandardMaterial3D
-		mat.albedo_color = tint
+		#mat.albedo_color = tint
 		mesh_node.material_override = mat
 
 	var shape := BoxShape3D.new()
