@@ -41,7 +41,7 @@ script = ExtResource("1_qfnet")
 environment = SubResource("Environment_world")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=585044403]
-transform = Transform3D(-0.5148921, -0.516679, 0.6840534, 0.18601713, 0.7116056, 0.67750645, -0.83682954, 0.47608823, -0.270289, 0, 0, 0)
+transform = Transform3D(-0.5148921, -0.51667905, 0.68405324, 0.18601713, 0.7116057, 0.67750645, -0.83682954, 0.47608837, -0.270289, 0.005294323, 0.00046408176, -0.0038359165)
 shadow_enabled = true
 
 [node name="CityGenerator" type="Node3D" parent="." unique_id=244264637]

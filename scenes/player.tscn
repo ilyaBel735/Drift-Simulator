@@ -29,8 +29,6 @@ height = 0.3
 [node name="Player" type="CharacterBody3D" unique_id=1448336791]
 motion_mode = 1
 script = ExtResource("1_player")
-max_forward_speed = 320.0
-max_reverse_speed = 120.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=514972638]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
@@ -38,6 +36,7 @@ shape = SubResource("BoxShape3D_player")
 
 [node name="Body" type="MeshInstance3D" parent="." unique_id=1887408855]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+visible = false
 material_override = SubResource("Material_body")
 mesh = SubResource("BoxMesh_body")
 
@@ -47,6 +46,7 @@ material_override = SubResource("Material_cabin")
 mesh = SubResource("BoxMesh_cabin")
 
 [node name="Wheels" type="Node3D" parent="." unique_id=1780866444]
+visible = false
 
 [node name="WheelFL" type="MeshInstance3D" parent="Wheels" unique_id=715274950]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.95, 0.4, -1.35)
@@ -76,4 +76,3 @@ far = 800.0
 
 [node name="Sketchfab_Scene" parent="." unique_id=1702566913 instance=ExtResource("2_g2els")]
 transform = Transform3D(-80, 0, -6.9938224e-06, 0, 80, 0, 6.9938224e-06, 0, -80, 0, 0, 0)
-visible = false

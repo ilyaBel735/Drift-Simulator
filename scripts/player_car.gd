@@ -15,6 +15,7 @@ extends CharacterBody3D
 
 func _ready() -> void:
     motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+    add_to_group("player")
 
     var cam := get_node_or_null("Camera3D") as Camera3D
     if cam:
