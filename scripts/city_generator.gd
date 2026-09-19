@@ -72,6 +72,8 @@ const RoadLineScene = preload("res://scenes/road_line.tscn")
 @export var keep_origin_loaded := true
 @export var update_interval := 0.4
 
+@export var city_grid_size := 3        # сетка зданий в городском чанке (было 2)
+
 var gas_stations := {}
 var building_doors := {}
 var parking_spots := {}
@@ -371,7 +373,7 @@ func _generate_chunk(chunk: Vector2i) -> Node3D:
 
 	var density := _district_density(district)
 	if guaranteed:
-		density = maxf(density, 0.4)
+		density = maxf(density, 0.7)
 
 	# --- Пол ---
 	var ground_scene: PackedScene = GroundNatureScene
@@ -452,11 +454,11 @@ func _generate_buildings(parent: Node3D, rng: RandomNumberGenerator, density: fl
 	var inner_size := inner_half * 2.0
 	if inner_size < 8.0:
 		return
-	var lot_size := inner_size / 2.0
-	var building_chance := clampf(0.2 + density * 0.7, 0.0, 0.95)
+	var lot_size := inner_size / float(city_grid_size)
+	var building_chance := clampf(0.45 + density * 0.5, 0.0, 0.98)
 	var height_multiplier := lerpf(0.7, 1.4, density)
-	for lx in 2:
-		for lz in 2:
+	for lx in city_grid_size:
+		for lz in city_grid_size:
 			if rng.randf() > building_chance:
 				continue
 			var lot_center := Vector3(
@@ -469,7 +471,15 @@ func _generate_buildings(parent: Node3D, rng: RandomNumberGenerator, density: fl
 			var h := rng.randf_range(building_min_height, building_max_height) * height_multiplier
 			var jitter_x := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - w) * 0.25)
 			var jitter_z := rng.randf_range(-1.0, 1.0) * maxf(0.0, (lot_size - d) * 0.25)
-			_add_building(parent, lot_center + Vector3(jitter_x, 0.0, jitter_z), w, h, d, rng, chunk)
+			_add_building(
+				parent,
+				lot_center + Vector3(jitter_x, 0.0, jitter_z),
+				w,
+				h,
+				d,
+				rng,
+				chunk
+			)
 
 func _generate_village(parent: Node3D, rng: RandomNumberGenerator, density: float, chunk: Vector2i) -> void:
 	var inner_half := spacing * 0.5 - road_width * 0.5 - building_margin

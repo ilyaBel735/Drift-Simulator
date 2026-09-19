@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://brgri6vfbtikl"]
 
 [ext_resource type="Script" uid="uid://dhtmoqferorlo" path="res://scripts/city_generator.gd" id="1_city"]
+[ext_resource type="Script" uid="uid://bjv5014fveujn" path="res://scripts/sky_manager.gd" id="1_qfnet"]
 [ext_resource type="Script" uid="uid://qt4lnl1dsm6s" path="res://scripts/bot_manager.gd" id="2_manager"]
 [ext_resource type="PackedScene" uid="uid://sdabq7us5t0u" path="res://scenes/traffic_bot.tscn" id="3_traffic_bot"]
 [ext_resource type="Script" uid="uid://2ccsdcg27h5b" path="res://scripts/pedestrian_manager.gd" id="4_ped_manager"]
@@ -28,13 +29,13 @@ panorama = SubResource("NoiseTexture2D_4mrxx")
 sky_material = SubResource("PanoramaSkyMaterial_i7141")
 
 [sub_resource type="Environment" id="Environment_world"]
-background_mode = 2
 background_color = Color(0.47665244, 0.65151817, 0.93536776, 1)
 sky = SubResource("Sky_71j4m")
 ambient_light_source = 2
 ambient_light_color = Color(0.7592122, 0.5579821, 0.10659725, 1)
 
 [node name="World" type="Node3D" unique_id=624245230]
+script = ExtResource("1_qfnet")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1195726681]
 environment = SubResource("Environment_world")

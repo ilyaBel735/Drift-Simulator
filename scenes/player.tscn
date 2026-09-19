@@ -29,6 +29,8 @@ height = 0.3
 [node name="Player" type="CharacterBody3D" unique_id=1448336791]
 motion_mode = 1
 script = ExtResource("1_player")
+max_forward_speed = 320.0
+max_reverse_speed = 120.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=514972638]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
